@@ -2,6 +2,7 @@
   "_comment": "Discord relay configuration. Copy this file to discord-config.json, fill in your values, and never commit the real token.",
   "token": "",
   "channelId": "",
+  "channelName": "",
   "isDm": false,
   "bubbleMs": 4000
 }

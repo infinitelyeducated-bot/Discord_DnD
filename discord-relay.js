@@ -14,13 +14,29 @@ function readDiscordConfig() {
     } catch { return null; }
 }
 
+
+function resolveChannelByName(client) {
+    const name = CONFIG.channelName;
+    if (!name || CONFIG.channelId) return;
+    const found = client.channels.cache.find(c => c.name === name && c.isTextBased && c.isTextBased());
+    if (found) {
+        CONFIG.channelId = found.id;
+        console.log('Discord relay: resolved channel #' + name + ' (' + found.id + ')');
+    } else {
+        console.log('Discord relay: could not find a text channel named #' + name + ' on this server');
+    }
+}
+
 async function startDiscordRelay() {
     if (!CONFIG || !CONFIG.token || !CONFIG.channelId) {
         console.log('Discord relay: off (discord-config.json missing or empty)');
         return null;
     }
     const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
-    client.on('ready', () => console.log('Discord relay: online as ' + client.user.tag));
+    client.on('ready', () => {
+        console.log('Discord relay: online as ' + client.user.tag);
+        resolveChannelByName(client);
+    });
     client.on('messageCreate', msg => {
         if (msg.channel.id !== CONFIG.channelId || msg.author.bot) return;
         const text = msg.content.trim();
