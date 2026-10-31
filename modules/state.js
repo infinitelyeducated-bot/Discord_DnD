@@ -14,8 +14,8 @@ import {
     CLASSES,
     PLAYER_COLORS,
     PLAYER_MARKERS
-} from './config.js?v=mvwp0u0j';
-import { deepClone, positionKey } from './utils.js?v=mvwp0u0j';
+} from './config.js?v=mvwq2xf0';
+import { deepClone, positionKey } from './utils.js?v=mvwq2xf0';
 
 export const MIGRATIONS = {
     1: snapshot => {

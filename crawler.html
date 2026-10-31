@@ -120,7 +120,7 @@
         .main-stage {
             display: grid;
             grid-template-columns: minmax(260px, 340px) minmax(0, 1fr) minmax(200px, 230px);
-            grid-template-rows: minmax(320px, 1fr) minmax(140px, 170px);
+            grid-template-rows: minmax(320px, 1fr) minmax(150px, 180px);
             grid-template-areas:
                 "map map side"
                 "log log side";
@@ -251,7 +251,7 @@
         .ascii-art {
             font-family: 'Courier New', monospace;
             white-space: pre;
-            font-size: 10px;
+            font-size: 12.5px;
             line-height: 1;
         }
         
@@ -1483,7 +1483,7 @@
             gap: 10px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 860px) {
             .mobile-controls {
                 display: flex;
             }
@@ -1497,7 +1497,7 @@
             }
 
             .game-container {
-                padding-bottom: 110px;
+                padding-bottom: 118px;
             }
         }
 
@@ -1982,6 +1982,6 @@
         window.addEventListener('error', function (e) { window.__pdcLastError = e.message || String(e); }, true);
     })();
     </script>
-    <script type="module" src="modules/main.js?v=mvwp0u0j"></script>
+    <script type="module" src="modules/main.js?v=mvwq2xf0"></script>
 </body>
 </html>

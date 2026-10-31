@@ -1,11 +1,11 @@
-import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwp0u0j';
-import { activeMember } from './state.js?v=mvwp0u0j';
-import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwp0u0j';
-import { positionKey } from './utils.js?v=mvwp0u0j';
-import { nearestAttackTarget } from './combat.js?v=mvwp0u0j';
-import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwp0u0j';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwp0u0j';
-import { hasStatusEffect } from './party.js?v=mvwp0u0j';
+import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwq2xf0';
+import { activeMember } from './state.js?v=mvwq2xf0';
+import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwq2xf0';
+import { positionKey } from './utils.js?v=mvwq2xf0';
+import { nearestAttackTarget } from './combat.js?v=mvwq2xf0';
+import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwq2xf0';
+import { pathDistanceWithin } from './pathfinding.js?v=mvwq2xf0';
+import { hasStatusEffect } from './party.js?v=mvwq2xf0';
 
 const CLASS_AVATARS = {
     fighter: '⚔',
@@ -542,7 +542,7 @@ export function updateMapSizing() {
     const mapViewport = document.getElementById('dungeon-map');
     const mapContent = document.getElementById('dungeon-map-content');
     if (!mapViewport || !mapContent) return;
-    const fontSize = Math.max(6, Math.min(9, mapViewport.clientWidth / 32));
+    const fontSize = Math.max(7.5, Math.min(11.25, mapViewport.clientWidth / 25.6));
     mapViewport.style.fontSize = `${fontSize}px`;
     mapContent.style.padding = `${mapViewport.clientHeight / 2}px ${mapViewport.clientWidth / 2}px`;
 }
