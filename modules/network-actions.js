@@ -1,6 +1,6 @@
-import { activeMember } from './state.js?v=mvwrjkpo';
-import { move, attack, standGuard, rest, finishTurn, castAbility } from './actions.js?v=mvwrjkpo';
-import { deepClone } from './utils.js?v=mvwrjkpo';
+import { activeMember } from './state.js?v=mvwrvbx4';
+import { move, attack, standGuard, rest, finishTurn, castAbility } from './actions.js?v=mvwrvbx4';
+import { deepClone } from './utils.js?v=mvwrvbx4';
 
 const pendingActions = new Map();
 

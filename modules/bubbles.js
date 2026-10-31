@@ -2,7 +2,7 @@
 // id) or falls back to a floating tag near the map viewport for senders that
 // have no character. Bubbles fade out after BUBBLE_MS and are placed once per
 // frame (the map is a scrolled grid, so a bubble must track its cell).
-import { renderFloatingTexts, updateFloatingTexts } from './ui.js?v=mvwrjkpo';
+import { renderFloatingTexts, updateFloatingTexts } from './ui.js?v=mvwrvbx4';
 
 let BUBBLE_MS = 4000;
 const MAX_BUBBLES = 8     // hard cap per page so a chat storm can't leak DOM

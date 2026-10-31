@@ -1,15 +1,15 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwrjkpo';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwrjkpo';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers, classPriorityStat } from './party.js?v=mvwrjkpo';
-import { createLogger } from './log.js?v=mvwrjkpo';
-import { LayoutManager } from './layout.js?v=mvwrjkpo';
-import { DiscordRelay } from './discord.js?v=mvwrjkpo';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwrjkpo';
-import { zoomMapAt, setMapZoom, getMapZoom, rotateMap } from './ui.js?v=mvwrjkpo';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwrjkpo';
-import { bindInput } from './input.js?v=mvwrjkpo';
-import { nearestAttackTarget } from './combat.js?v=mvwrjkpo';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwrjkpo';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwrvbx4';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwrvbx4';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers, classPriorityStat } from './party.js?v=mvwrvbx4';
+import { createLogger } from './log.js?v=mvwrvbx4';
+import { LayoutManager } from './layout.js?v=mvwrvbx4';
+import { DiscordRelay } from './discord.js?v=mvwrvbx4';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwrvbx4';
+import { zoomMapAt, setMapZoom, getMapZoom, rotateMap } from './ui.js?v=mvwrvbx4';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwrvbx4';
+import { bindInput } from './input.js?v=mvwrvbx4';
+import { nearestAttackTarget } from './combat.js?v=mvwrvbx4';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwrvbx4';
 
 let game = createGame();
 let gameLog = [];
@@ -91,7 +91,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvwrjkpo').then(m => {
+            import('./actions.js?v=mvwrvbx4').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -206,7 +206,7 @@ function startTurnTimer(seconds) {
         if (turnTimeLeft <= 0) {
             stopTurnTimer();
             logMessage('Turn timer expired.', activeMember(game));
-            import('./actions.js?v=mvwrjkpo').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
+            import('./actions.js?v=mvwrvbx4').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
     }, 1000);
 }
@@ -265,11 +265,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwrjkpo').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwrvbx4').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwrjkpo').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwrvbx4').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -346,7 +346,7 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvwrjkpo').then(m => {
+            import('./actions.js?v=mvwrvbx4').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
@@ -590,8 +590,8 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvwrjkpo';
-import { removePartyMember } from './party.js?v=mvwrjkpo';
+import { movementAllowance } from './party.js?v=mvwrvbx4';
+import { removePartyMember } from './party.js?v=mvwrvbx4';
 
 
 function setupDiscordRelay() {
@@ -621,10 +621,11 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvwrjkpo';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwrjkpo';
-import { castAbility } from './actions.js?v=mvwrjkpo';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwrjkpo';
+import { initAudio, playSound } from './audio.js?v=mvwrvbx4';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwrvbx4';
+import { move, attack, standGuard, rest, finishTurn } from './actions.js?v=mvwrvbx4';
+import { castAbility } from './actions.js?v=mvwrvbx4';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwrvbx4';
 
 function bindAudioControls() {
     initAudio();
@@ -747,6 +748,24 @@ function bindErrorBoundary() {
     window.addEventListener('unhandledrejection', event => showErrorBoundary(event.reason));
 }
 
+// ——— External coop-session API (drives this live page, visible on screen) ———
+window.__pdcGameRef = () => game;
+window.__pdcDrive = {
+    move: (dir) => { try { localOrSend('move', { direction: dir }, () => move(game, dir, logMessage, updateUI, broadcast)); return true; } catch (e) { return false; } },
+    attack: () => { try { localOrSend('attack', {}, () => attack(game, logMessage, updateUI, broadcast)); return true; } catch (e) { return false; } },
+    rest: () => { try { localOrSend('rest', {}, () => rest(game, logMessage, updateUI, broadcast)); return true; } catch (e) { return false; } },
+    guard: () => { try { localOrSend('guard', {}, () => standGuard(game, logMessage, updateUI, broadcast)); return true; } catch (e) { return false; } },
+    endTurn: () => { try { localOrSend('endTurn', {}, () => finishTurn(game, logMessage, updateUI, broadcast)); return true; } catch (e) { return false; } },
+    ability: (slot) => { try { localOrSendAbility(slot); return true; } catch (e) { return false; } },
+    chat: (text) => { if (discordRelay?.isDm) discordRelay.relayChat(text, 'DM'); handleChatBubble({ sender: 'DM', text, timestamp: Date.now(), memberId: null }); logMessage('DM: ' + text.slice(0, 140), null, 'DM'); },
+    game: () => game,
+    party: () => game.party.map(m => ({ name: m.name, cls: m.classKey, hp: m.hp, maxHp: m.maxHp, lvl: m.level, floor: m.dungeonLevel, x: m.position?.x, y: m.position?.y, moves: m.movesRemaining })),
+    active: () => { const a = activeMember(game); return a ? a.name : null; },
+    monsters: () => { const o = []; for (let y = 0; y < game.mapHeight; y++) for (let x = 0; x < game.mapWidth; x++) if (game.map[y][x] === 'M') o.push({ x, y, hp: game.monsters[x + ',' + y]?.hp }); return o; },
+    treasures: () => Object.keys(game.treasures || {}).map(k => { const [x, y] = k.split(',').map(Number); return { x, y }; }),
+    exit: () => game.exitPositions?.[0] || null,
+    descend: () => { try { import('./actions.js?v=mvwrvbx4').then(m => m.descendFloor(game, activeMember(game), logMessage)); updateUI(); return true; } catch (e) { return false; } }
+};
 window.addEventListener('DOMContentLoaded', () => {
     try {
         initGame();

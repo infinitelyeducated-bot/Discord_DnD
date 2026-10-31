@@ -1,11 +1,11 @@
-import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwrjkpo';
-import { activeMember } from './state.js?v=mvwrjkpo';
-import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwrjkpo';
-import { positionKey } from './utils.js?v=mvwrjkpo';
-import { nearestAttackTarget } from './combat.js?v=mvwrjkpo';
-import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwrjkpo';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwrjkpo';
-import { hasStatusEffect } from './party.js?v=mvwrjkpo';
+import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwrvbx4';
+import { activeMember } from './state.js?v=mvwrvbx4';
+import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwrvbx4';
+import { positionKey } from './utils.js?v=mvwrvbx4';
+import { nearestAttackTarget } from './combat.js?v=mvwrvbx4';
+import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwrvbx4';
+import { pathDistanceWithin } from './pathfinding.js?v=mvwrvbx4';
+import { hasStatusEffect } from './party.js?v=mvwrvbx4';
 
 const CLASS_AVATARS = {
     fighter: '⚔',
