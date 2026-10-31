@@ -1,21 +1,22 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvvrqkfn';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvvrqkfn';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvvrqkfn';
-import { createLogger } from './log.js?v=mvvrqkfn';
-import { LayoutManager } from './layout.js?v=mvvrqkfn';
-import { NetworkManager } from './network.js?v=mvvrqkfn';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvvrqkfn';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvvrqkfn';
-import { bindInput } from './input.js?v=mvvrqkfn';
-import { handleRemoteAction, sendLocalAction, confirmLocalAction, rejectLocalAction } from './network-actions.js?v=mvvrqkfn';
-import { nearestAttackTarget } from './combat.js?v=mvvrqkfn';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvvrqkfn';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwinfv6';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwinfv6';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwinfv6';
+import { createLogger } from './log.js?v=mvwinfv6';
+import { LayoutManager } from './layout.js?v=mvwinfv6';
+import { DiscordRelay } from './discord.js?v=mvwinfv6';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwinfv6';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwinfv6';
+import { bindInput } from './input.js?v=mvwinfv6';
+import { handleRemoteAction, sendLocalAction, confirmLocalAction, rejectLocalAction } from './network-actions.js?v=mvwinfv6';
+import { nearestAttackTarget } from './combat.js?v=mvwinfv6';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwinfv6';
 
 let game = createGame();
 let gameLog = [];
 let logMessage = createLogger(gameLog, appendLogRecord);
 let layoutManager = new LayoutManager();
 let networkManager = null;
+let discordRelay = null;
 
 // In the browser, keep the turn lock for at least this long so a double-click on
 // End Turn cannot end the next player's turn too. Bots and tests leave it at 0.
@@ -91,7 +92,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvvrqkfn').then(m => {
+            import('./actions.js?v=mvwinfv6').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -132,6 +133,10 @@ function canMove(game, member, direction) {
 }
 
 function appendLogRecord(record) {
+    if (discordRelay?.isDm && record?.message) {
+        const line = String(record.message).split(String.fromCharCode(10))[0];
+        if (line.trim()) discordRelay.relayLog(line.slice(0, 120), record.actorName || 'Dungeon');
+    }
     if (record && record.message && record.memberId) {
         const firstLine = String(record.message).split(String.fromCharCode(10))[0];
         if (firstLine.length > 4) handleChatBubble({ sender: record.actorName || 'Dungeon', memberId: record.memberId, text: firstLine, timestamp: Date.now() });
@@ -296,7 +301,7 @@ function setupNetworkHandlers() {
         if (!networkManager.isHost) {
             sendLocalAction(networkManager, 'endTurn', {});
         } else {
-            import('./actions.js?v=mvvrqkfn').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
+            import('./actions.js?v=mvwinfv6').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
     });
 }
@@ -435,6 +440,7 @@ function bindNetworkUI() {
         if (networkManager?.mode) {
             networkManager.sendChat(text);
         }
+        if (discordRelay?.isDm) discordRelay.relayChat(text, sender);
         appendChatMessage(msg);
         chatInput.value = '';
     });
@@ -498,11 +504,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvvrqkfn').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwinfv6').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvvrqkfn').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwinfv6').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -579,7 +585,7 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvvrqkfn').then(m => {
+            import('./actions.js?v=mvwinfv6').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
@@ -773,11 +779,25 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvvrqkfn';
-import { removePartyMember } from './party.js?v=mvvrqkfn';
+import { movementAllowance } from './party.js?v=mvwinfv6';
+import { removePartyMember } from './party.js?v=mvwinfv6';
+
+
+function setupDiscordRelay() {
+    if (discordRelay) return;
+    discordRelay = new DiscordRelay();
+    discordRelay.connect();
+    discordRelay.onEvent('chat', data => {
+        // players' Discord messages land in party chat + a bubble on their character
+        appendChatMessage({ type: 'chat', sender: data.sender, text: data.text, timestamp: data.timestamp, memberId: null });
+    });
+    const st = document.getElementById('discord-status');
+    if (st) st.textContent = 'Discord relay: connecting…';
+}
 
 function startFloatingTextLoop() {
     window.__pdcNet = networkManager;
+    setupDiscordRelay();
     let last = performance.now();
     function frame(now) {
         const delta = (now - last) / 1000;
@@ -790,10 +810,10 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvvrqkfn';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvvrqkfn';
-import { castAbility } from './actions.js?v=mvvrqkfn';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvvrqkfn';
+import { initAudio, playSound } from './audio.js?v=mvwinfv6';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwinfv6';
+import { castAbility } from './actions.js?v=mvwinfv6';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwinfv6';
 
 function bindAudioControls() {
     initAudio();

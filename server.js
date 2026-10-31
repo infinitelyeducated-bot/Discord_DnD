@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { WebSocketServer } from 'ws';
 import os from 'os';
+import { attachRelay } from './discord-relay.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,7 +42,7 @@ const server = http.createServer((req, res) => {
     });
 });
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ noServer: true });
 const peers = new Map(); // peerId -> ws
 
 wss.on('connection', (ws, req) => {
@@ -92,6 +93,7 @@ function startServer(port = DEFAULT_PORT) {
 }
 
 startServer();
+attachRelay(server, wss);
 
 function getLocalAddresses() {
     const nets = os.networkInterfaces();

@@ -1,4 +1,4 @@
-import { activeMember } from './state.js?v=mvvrqkfn';
+import { activeMember } from './state.js?v=mvwinfv6';
 import {
     adjacentDeadPartyMembers,
     setMovementAllowance,
@@ -8,11 +8,11 @@ import {
     addItemToInventory,
     tickStatusEffects,
     hasStatusEffect
-} from './party.js?v=mvvrqkfn';
-import { storeActiveFloor, loadMemberFloor, updateExplored, isWalkable, toggleDoor, getBiome, getItemAt, removeItemAt, isShrineAt, setPartyFormation } from './map.js?v=mvvrqkfn';
-import { handleTrap, handleTreasure, attackMonster, enemyTurn, checkPartyDefeat, nearestAttackTarget, useItem, reviveAtShrine } from './combat.js?v=mvvrqkfn';
-import { playSound } from './audio.js?v=mvvrqkfn';
-import { useAbility, refreshAbilityTurn, restoreCharges } from './abilities.js?v=mvvrqkfn';
+} from './party.js?v=mvwinfv6';
+import { storeActiveFloor, loadMemberFloor, updateExplored, isWalkable, toggleDoor, getBiome, getItemAt, removeItemAt, isShrineAt, setPartyFormation } from './map.js?v=mvwinfv6';
+import { handleTrap, handleTreasure, attackMonster, enemyTurn, checkPartyDefeat, nearestAttackTarget, useItem, reviveAtShrine } from './combat.js?v=mvwinfv6';
+import { playSound } from './audio.js?v=mvwinfv6';
+import { useAbility, refreshAbilityTurn, restoreCharges } from './abilities.js?v=mvwinfv6';
 
 // True while the monster phase is running after a turn ends. Every player action
 // checks this so a second End Turn (or a key press) cannot skip the next player.

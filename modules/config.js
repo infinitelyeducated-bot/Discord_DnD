@@ -16,7 +16,7 @@ export const LEGACY_MAP_HEIGHT = 35;
 export const MAP_SIZE_MULTIPLIER = 2.3;
 export const MAX_MAP_WIDTH = 141;
 export const MAX_MAP_HEIGHT = 81;
-export const SIGNALING_SERVER_URL = typeof location !== 'undefined' ? `ws://${location.hostname}:8080` : 'ws://localhost:8080';
+export const SIGNALING_SERVER_URL = typeof location !== 'undefined' ? `ws://${location.hostname}:8080/signal` : 'ws://localhost:8080/signal';
 
 export const PLAYER_COLORS = [
     '#ff4d4d', '#00bfff', '#00e676', '#ffd600',
