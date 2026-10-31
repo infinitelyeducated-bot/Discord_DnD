@@ -1,5 +1,5 @@
 @echo off
-title PixelBear Dungeon Crawler - NETWORK SERVER
+title Discord D&D Dungeon Crawler - NETWORK SERVER
 color 4F
 cd /d "%~dp0"
 cls
@@ -8,7 +8,7 @@ echo  ============================================================
 echo    WARNING: THIS STARTS A NETWORK-ACCESSIBLE SERVER
 echo  ============================================================
 echo.
-echo    Game:     PixelBear Dungeon Crawler (multiplayer edition)
+echo    Game:     Discord D&D Dungeon Crawler (multiplayer edition)
 echo    Port:     8080  (moves to 8081, 8082... if 8080 is busy)
 echo    Reach:    ANY device on your network (Wi-Fi / LAN) will be
 echo              able to open the game and join as a player.
@@ -33,7 +33,7 @@ if /i not "%CONFIRM%"=="YES" (
 )
 color 07
 cls
-echo Starting PixelBear Dungeon Crawler server...
+echo Starting Discord D&D Dungeon Crawler server...
 echo (keep this window open while you play; close it to stop the server)
 echo.
 if not exist node_modules (
