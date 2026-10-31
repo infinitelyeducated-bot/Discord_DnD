@@ -1,11 +1,11 @@
-import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwrvbx4';
-import { activeMember } from './state.js?v=mvwrvbx4';
-import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwrvbx4';
-import { positionKey } from './utils.js?v=mvwrvbx4';
-import { nearestAttackTarget } from './combat.js?v=mvwrvbx4';
-import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwrvbx4';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwrvbx4';
-import { hasStatusEffect } from './party.js?v=mvwrvbx4';
+import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvws83vy';
+import { activeMember } from './state.js?v=mvws83vy';
+import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvws83vy';
+import { positionKey } from './utils.js?v=mvws83vy';
+import { nearestAttackTarget } from './combat.js?v=mvws83vy';
+import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvws83vy';
+import { pathDistanceWithin } from './pathfinding.js?v=mvws83vy';
+import { hasStatusEffect } from './party.js?v=mvws83vy';
 
 const CLASS_AVATARS = {
     fighter: '⚔',
@@ -195,11 +195,16 @@ function styleCell(game, cellElement, x, y, cell, member, membersHere, active, v
         cellElement.style.color = dim ? '#004d55' : '#00e5ff';
         cellElement.title = 'Starting position';
     } else if (cell === 'M') {
-        cellElement.style.color = dim ? '#4a1a1a' : '#ef5350';
-        const monster = game.monsters[positionKey(x, y)];
-        if (monster) {
-            cellElement.title = buildMonsterTooltip(monster);
-            if (visible) {
+        // Only render monsters in the players' line of sight. A monster outside
+        // LOS shows as an explored, empty-looking cell (dim, no glyph, no hp bar).
+        if (!visible) {
+            cellElement.textContent = ' ';
+            cellElement.style.color = 'transparent';
+        } else {
+            cellElement.style.color = '#ef5350';
+            const monster = game.monsters[positionKey(x, y)];
+            if (monster) {
+                cellElement.title = buildMonsterTooltip(monster);
                 cellElement.classList.add('monster-cell');
                 const indicator = document.createElement('span');
                 indicator.className = 'monster-health-indicator';

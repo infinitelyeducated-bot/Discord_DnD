@@ -1,9 +1,9 @@
-import { POWER_ITEM_DROP_CHANCE, MAX_CHARACTER_LEVEL, ENEMIES, MAX_ENEMY_SCALE_LEVEL, MAX_ENEMY_ATTACK_BONUS, BOSSES, ITEMS } from './config.js?v=mvwrvbx4';
-import { positionKey } from './utils.js?v=mvwrvbx4';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwrvbx4';
-import { addFloatingText } from './ui.js?v=mvwrvbx4';
-import { activeMember } from './state.js?v=mvwrvbx4';
-import { playSound } from './audio.js?v=mvwrvbx4';
+import { POWER_ITEM_DROP_CHANCE, MAX_CHARACTER_LEVEL, ENEMIES, MAX_ENEMY_SCALE_LEVEL, MAX_ENEMY_ATTACK_BONUS, BOSSES, ITEMS } from './config.js?v=mvws83vy';
+import { positionKey } from './utils.js?v=mvws83vy';
+import { pathDistanceWithin } from './pathfinding.js?v=mvws83vy';
+import { addFloatingText } from './ui.js?v=mvws83vy';
+import { activeMember } from './state.js?v=mvws83vy';
+import { playSound } from './audio.js?v=mvws83vy';
 import {
     adjacentPartyMembers,
     adjacentDeadPartyMembers,
@@ -17,7 +17,7 @@ import {
     tickStatusEffects,
     clearStatusEffect,
     hasStatusEffect
-} from './party.js?v=mvwrvbx4';
+} from './party.js?v=mvws83vy';
 
 export function handleTrap(game, x, y, logMessage) {
     const member = activeMember(game);
@@ -257,62 +257,68 @@ async function activateMonsterAI(game, member, logMessage, updateUI, broadcast) 
             if (!m.slowed) logMessage(`${m.name} is no longer pinned.`, null, m.name);
         }
 
-        const dist = Math.abs(pos.x - member.position.x) + Math.abs(pos.y - member.position.y);
-        if (dist > 8) {
-            if (acted && updateUI) { updateUI(); if (broadcast) broadcast({ type: 'sync', game }); await delay(250); }
+        // — First strike — every character rolls 1-in-20 to attack first when a
+        //   monster is adjacent; rogue rolls 1-in-5 with +5 damage.
+        if (distTo(pos, member) <= 1) {
+            const rogue = member.classKey === 'rogue';
+            const chance = rogue ? 0.2 : 0.05;
+            if (Math.random() < chance) {
+                const bonus = rogue ? 5 : 0;
+                const dmg = Math.max(1, member.attack + bonus + Math.floor(Math.random() * 3));
+                m.hp = Math.max(0, m.hp - dmg);
+                logMessage(`${member.name} ${rogue ? 'springs first and strikes' : 'gets the first strike'} ${m.name} for ${dmg} damage — no damage taken!`, member);
+                if (m.hp <= 0) {
+                    delete game.monsters[positionKey(pos.x, pos.y)];
+                    game.map[pos.y][pos.x] = '.';
+                    const xp = killExperience(member, game);
+                    gainExperience(member, xp, 'defeating a monster', game, logMessage);
+                    logMessage(`${member.name} defeats ${m.name} and gains ${xp} XP.`, member);
+                }
+                acted = true;
+                if (updateUI) { updateUI(); if (broadcast) broadcast({ type: 'sync', game }); await delay(250); }
+                continue;
+            }
+            // fail → monster attacks (its stats)
+            const guardedByParty = Math.min(3, adjacentPartyMembers(game, member).length);
+            const damage = Math.max(1, m.attack - member.defense - guardedByParty + Math.floor(Math.random() * 2));
+            member.hp = Math.max(0, member.hp - damage);
+            addFloatingText(member.position.x, member.position.y, `-${damage}`, '#ff7043');
+            playSound('hit');
+            logMessage(`${member.name} fails the first-strike roll; ${m.name} attacks for ${damage} damage.`, member);
+            applyMonsterOnHitEffect(m, member, logMessage);
+            if (member.hp === 0) { downMember(game, member, logMessage); }
+            acted = true;
+            if (updateUI) { updateUI(); if (broadcast) broadcast({ type: 'sync', game }); await delay(250); }
             continue;
         }
-        switch (m.ai) {
-            case 'ranged':
-                if (dist <= 4 && dist > 1) {
-                    const damage = Math.max(1, m.attack - member.defense + Math.floor(Math.random() * 2));
-                    member.hp = Math.max(0, member.hp - damage);
-                    addFloatingText(member.position.x, member.position.y, `-${damage}`, '#ff7043');
-                    addFloatingText(pos.x, pos.y, 'RANGED!', '#ff9100');
-                    playSound('hit');
-                    logMessage(`${m.name} shoots ${member.name} for ${damage} damage.`, null, m.name);
-                    applyMonsterOnHitEffect(m, member, logMessage);
-                    if (member.hp === 0) downMember(game, member, logMessage);
-                    acted = true;
-                }
+
+        // — Move 1–3 squares toward a player (small steps per monster turn) —
+        const steps = 1 + Math.floor(Math.random() * 3);
+        for (let i = 0; i < steps; i++) {
+            if (distTo(pos, member) <= 1) break;
+            moveMonsterToward(game, pos, member.position);
+            if (distTo(pos, member) <= 1) {
+                logMessage(`${m.name} closes in on ${member.name}.`, null, m.name);
                 break;
-            case 'fleeing':
-                if (dist <= 2) {
-                    fleeMonster(game, pos, member);
-                    acted = true;
-                }
-                break;
-            case 'pack':
-                if (dist <= 5) {
-                    const packNearby = monsterPositions.filter(other =>
-                        other !== pos && Math.abs(other.x - pos.x) + Math.abs(other.y - pos.y) <= 2
-                    ).length;
-                    if (packNearby >= 1 && Math.random() < 0.35) {
-                        moveMonsterToward(game, pos, member.position);
-                        acted = true;
-                    }
-                }
-                break;
-            case 'patrol':
-                if (dist <= 6 && Math.random() < 0.25) {
-                    moveMonsterToward(game, pos, member.position);
-                    acted = true;
-                }
-                break;
-            case 'brute':
-            default:
-                if (dist <= 4 && Math.random() < 0.2) {
-                    moveMonsterToward(game, pos, member.position);
-                    acted = true;
-                }
-                break;
+            }
         }
-        if (acted && updateUI) {
-            updateUI();
-            if (broadcast) broadcast({ type: 'sync', game });
-            await delay(250);
+        if (distTo(pos, member) <= 1) {
+            const guardedByParty = Math.min(3, adjacentPartyMembers(game, member).length);
+            const damage = Math.max(1, m.attack - member.defense - guardedByParty + Math.floor(Math.random() * 2));
+            member.hp = Math.max(0, member.hp - damage);
+            addFloatingText(member.position.x, member.position.y, `-${damage}`, '#ff7043');
+            playSound('hit');
+            logMessage(`${m.name} attacks ${member.name} for ${damage} damage.`, null, m.name);
+            applyMonsterOnHitEffect(m, member, logMessage);
+            if (member.hp === 0) { downMember(game, member, logMessage); }
+            acted = true;
         }
+        if (acted && updateUI) { updateUI(); if (broadcast) broadcast({ type: 'sync', game }); await delay(250); }
     }
+}
+
+function distTo(pos, member) {
+    return Math.abs(pos.x - member.position.x) + Math.abs(pos.y - member.position.y);
 }
 
 function moveMonsterToward(game, pos, target) {
@@ -357,68 +363,7 @@ function fleeMonster(game, pos, member) {
     delete game.monsters[key];
 }
 
-function resolveGuardReaction(game, member, logMessage) {
-    let nearestPosition = null;
-    let nearestDistance = Infinity;
-    for (let y = 1; y < game.mapHeight - 1; y++) {
-        for (let x = 1; x < game.mapWidth - 1; x++) {
-            if (game.map[y][x] !== 'M') continue;
-            const distance = pathDistanceWithin(game, { x, y }, member.position, 2);
-            if (distance < nearestDistance) {
-                nearestDistance = distance;
-                nearestPosition = { x, y };
-            }
-        }
-    }
-    if (nearestPosition) {
-        const monster = game.monsters[positionKey(nearestPosition.x, nearestPosition.y)];
-        const alliesHelping = adjacentPartyMembers(game, member).filter(ally =>
-            Math.abs(ally.position.x - nearestPosition.x) + Math.abs(ally.position.y - nearestPosition.y) <= 1
-        );
-        const { damage, critical, criticalRoll } = rollAttackDamage(member, nearestDistance, Math.min(6, alliesHelping.length * 2));
-        monster.hp = Math.max(0, monster.hp - damage);
-        logMessage(
-            `${member.name} reacts to ${monster.name} and ${critical ? 'critically hits' : 'strikes'} for ${damage} damage` +
-            `${alliesHelping.length ? ` with ${alliesHelping.length} ally assist(s)` : ''}` +
-            `${critical ? ` (critical roll ${criticalRoll})` : ''}.`,
-            member
-        );
-        if (monster.hp === 0) {
-            const xp = killExperience(member, game);
-            logMessage(`${member.name} defeats ${monster.name} and gains ${xp} XP.`, member);
-            gainExperience(member, xp, 'defeating a monster', game, logMessage);
-            delete game.monsters[positionKey(nearestPosition.x, nearestPosition.y)];
-            game.map[nearestPosition.y][nearestPosition.x] = '.';
-        }
-    } else {
-        logMessage(`${member.name} stands guard, but no monster comes within 2 spaces.`, member);
-    }
-    if (member.classKey === 'cleric') attemptClericGuardHeal(game, member, logMessage);
-}
 
-function attemptClericGuardHeal(game, cleric, logMessage) {
-    if (cleric.clericHealedLevels.includes(cleric.dungeonLevel)) return;
-    const adjacentMembers = game.party.filter(member =>
-        member !== cleric && member.hp > 0 && member.position &&
-        member.dungeonLevel === cleric.dungeonLevel &&
-        Math.abs(member.position.x - cleric.position.x) + Math.abs(member.position.y - cleric.position.y) === 1
-    ).filter(member => member.hp < member.maxHp)
-        .sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp);
-    if (!adjacentMembers.length) {
-        logMessage(`${cleric.name} has no injured adjacent party member to heal while guarding.`, cleric);
-        return;
-    }
-    const chance = Math.min(100, cleric.intelligence * cleric.level);
-    if (Math.random() * 100 >= chance) {
-        logMessage(`${cleric.name} fails to heal while guarding (${chance}% chance).`, cleric);
-        return;
-    }
-    const target = adjacentMembers[0];
-    const healed = target.maxHp - target.hp;
-    target.hp = target.maxHp;
-    cleric.clericHealedLevels.push(cleric.dungeonLevel);
-    logMessage(`${cleric.name} fully heals adjacent ${target.name} for ${healed} HP while guarding.`, cleric);
-}
 
 export function rollAttackDamage(member, distance, teamDamageBonus = 0) {
     const wizardRangedAttack = member.classKey === 'wizard' && distance <= 2 && member.movesRemaining > 0;
@@ -540,7 +485,7 @@ export function useItem(game, itemKey, member, logMessage) {
     return true;
 }
 
-import { removeItemFromInventory, setMovementAllowance } from './party.js?v=mvwrvbx4';
+import { removeItemFromInventory, setMovementAllowance } from './party.js?v=mvws83vy';
 
 export function nearestAttackTarget(game, member) {
     if (!member?.position) return null;

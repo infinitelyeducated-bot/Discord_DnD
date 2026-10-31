@@ -1,15 +1,15 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwrvbx4';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwrvbx4';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers, classPriorityStat } from './party.js?v=mvwrvbx4';
-import { createLogger } from './log.js?v=mvwrvbx4';
-import { LayoutManager } from './layout.js?v=mvwrvbx4';
-import { DiscordRelay } from './discord.js?v=mvwrvbx4';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwrvbx4';
-import { zoomMapAt, setMapZoom, getMapZoom, rotateMap } from './ui.js?v=mvwrvbx4';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwrvbx4';
-import { bindInput } from './input.js?v=mvwrvbx4';
-import { nearestAttackTarget } from './combat.js?v=mvwrvbx4';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwrvbx4';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvws83vy';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvws83vy';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers, classPriorityStat } from './party.js?v=mvws83vy';
+import { createLogger } from './log.js?v=mvws83vy';
+import { LayoutManager } from './layout.js?v=mvws83vy';
+import { DiscordRelay } from './discord.js?v=mvws83vy';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvws83vy';
+import { zoomMapAt, setMapZoom, getMapZoom, rotateMap } from './ui.js?v=mvws83vy';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvws83vy';
+import { bindInput } from './input.js?v=mvws83vy';
+import { nearestAttackTarget } from './combat.js?v=mvws83vy';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvws83vy';
 
 let game = createGame();
 let gameLog = [];
@@ -91,7 +91,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvwrvbx4').then(m => {
+            import('./actions.js?v=mvws83vy').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -206,7 +206,7 @@ function startTurnTimer(seconds) {
         if (turnTimeLeft <= 0) {
             stopTurnTimer();
             logMessage('Turn timer expired.', activeMember(game));
-            import('./actions.js?v=mvwrvbx4').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
+            import('./actions.js?v=mvws83vy').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
     }, 1000);
 }
@@ -265,11 +265,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwrvbx4').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvws83vy').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwrvbx4').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvws83vy').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -346,7 +346,7 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvwrvbx4').then(m => {
+            import('./actions.js?v=mvws83vy').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
@@ -590,8 +590,8 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvwrvbx4';
-import { removePartyMember } from './party.js?v=mvwrvbx4';
+import { movementAllowance } from './party.js?v=mvws83vy';
+import { removePartyMember } from './party.js?v=mvws83vy';
 
 
 function setupDiscordRelay() {
@@ -621,11 +621,11 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvwrvbx4';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwrvbx4';
-import { move, attack, standGuard, rest, finishTurn } from './actions.js?v=mvwrvbx4';
-import { castAbility } from './actions.js?v=mvwrvbx4';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwrvbx4';
+import { initAudio, playSound } from './audio.js?v=mvws83vy';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvws83vy';
+import { move, attack, standGuard, rest, finishTurn } from './actions.js?v=mvws83vy';
+import { castAbility } from './actions.js?v=mvws83vy';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvws83vy';
 
 function bindAudioControls() {
     initAudio();
@@ -764,7 +764,7 @@ window.__pdcDrive = {
     monsters: () => { const o = []; for (let y = 0; y < game.mapHeight; y++) for (let x = 0; x < game.mapWidth; x++) if (game.map[y][x] === 'M') o.push({ x, y, hp: game.monsters[x + ',' + y]?.hp }); return o; },
     treasures: () => Object.keys(game.treasures || {}).map(k => { const [x, y] = k.split(',').map(Number); return { x, y }; }),
     exit: () => game.exitPositions?.[0] || null,
-    descend: () => { try { import('./actions.js?v=mvwrvbx4').then(m => m.descendFloor(game, activeMember(game), logMessage)); updateUI(); return true; } catch (e) { return false; } }
+    descend: () => { try { import('./actions.js?v=mvws83vy').then(m => m.descendFloor(game, activeMember(game), logMessage)); updateUI(); return true; } catch (e) { return false; } }
 };
 window.addEventListener('DOMContentLoaded', () => {
     try {

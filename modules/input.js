@@ -1,8 +1,8 @@
-import { move, attack, standGuard, rest, finishTurn, setFormation, setGameDifficulty, useInventoryItem } from './actions.js?v=mvwrvbx4';
-import { activeMember } from './state.js?v=mvwrvbx4';
-import { nearestAttackTarget } from './combat.js?v=mvwrvbx4';
-import { adjacentDeadPartyMembers } from './party.js?v=mvwrvbx4';
-import { isWalkable } from './map.js?v=mvwrvbx4';
+import { move, attack, standGuard, rest, finishTurn, setFormation, setGameDifficulty, useInventoryItem } from './actions.js?v=mvws83vy';
+import { activeMember } from './state.js?v=mvws83vy';
+import { nearestAttackTarget } from './combat.js?v=mvws83vy';
+import { adjacentDeadPartyMembers } from './party.js?v=mvws83vy';
+import { isWalkable } from './map.js?v=mvws83vy';
 
 export function bindInput(game, logMessage, updateUI, broadcast) {
     function localOrSend(action, args, executor) {
