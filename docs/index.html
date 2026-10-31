@@ -201,6 +201,28 @@
             font-size: 14px;
         }
 
+        .zoom-toolbar {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 12;
+            display: flex;
+            gap: 4px;
+            background: rgba(16,16,27,0.9);
+            border: 1px solid #4a4a6a;
+            border-radius: 6px;
+            padding: 2px 6px;
+        }
+        .zoom-toolbar button {
+            background: #2a2a3a;
+            color: #ffcc00;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            padding: 2px 7px;
+            cursor: pointer;
+        }
         .fullscreen-toggle {
             position: absolute;
             top: 4px;
@@ -671,6 +693,10 @@
             display: inline-block;
             width: 1ch;
             text-align: center;
+        }
+
+        #dungeon-map:hover {
+            cursor: zoom-in;
         }
 
         .map-cell.monster-cell {
@@ -1695,6 +1721,11 @@
             </div>
             <div class="main-stage">
                 <section class="map-column" id="map-column" aria-label="Dungeon map">
+                    <div class="zoom-toolbar" aria-label="Zoom map">
+                        <button id="zoom-out" type="button" title="Zoom out">−</button>
+                        <span id="zoom-level" style="color:#ffcc00; font-size:0.75rem; line-height:22px;">100%</span>
+                        <button id="zoom-in" type="button" title="Zoom in">+</button>
+                    </div>
                     <button id="fullscreen-toggle" class="fullscreen-toggle" type="button" title="Toggle fullscreen map">⛶</button>
                     <div id="dungeon-map" class="dungeon-map">
                         <div id="dungeon-map-content" class="dungeon-map-content"></div>
@@ -1982,6 +2013,6 @@
         window.addEventListener('error', function (e) { window.__pdcLastError = e.message || String(e); }, true);
     })();
     </script>
-    <script type="module" src="modules/main.js?v=mvwq2xf0"></script>
+    <script type="module" src="modules/main.js?v=mvwqbkdq"></script>
 </body>
 </html>
