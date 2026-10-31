@@ -1,6 +1,6 @@
 # Discord D&D — Dungeon Crawler
 
-A party-based ASCII dungeon crawler that runs in the browser. Supports local play and LAN/WAN multiplayer via WebRTC.
+A party-based ASCII dungeon crawler that runs in the browser. Supports local play and Discord-linked multiplayer: the DM shares their screen, players join through Discord, and chat, rolls and actions travel through the relay.
 
 ## Quick start
 
@@ -20,6 +20,16 @@ Then open http://localhost:8080/crawler.html. The game must be served over http:
 ### Single-file edition
 
 Want to play from a double-click with no server? Use **Ascii Dungeon Crawler**, the single-file edition built from this code with `node build-single-file.cjs`. It is identical except that networking is removed: https://github.com/infinitelyeducated-bot/Ascii_Dungeon_Crawler
+
+## Map controls
+
+The dungeon map is its own little world:
+
+- **Zoom** — mouse-wheel over the map zooms in/out, keeping the map centred in its area. Use the **+ / −** buttons (top-centre of the map) for the same thing; the **%** readout shows the current zoom (50%–300%).
+- **Pan** — **right-click and drag** anywhere on the map to scroll it around.
+- **Rotate** — **left-click and hold**: the map turns smoothly (90° steps, ~0.5 s each). Hold the left half to turn counter-clockwise, the right half to turn clockwise.
+
+The mouse shows a magnifying-glass cursor over the map. Zoom, pan and rotation only change your *view* — the game grid underneath stays the same.
 
 ## Controls
 

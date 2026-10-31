@@ -1,7 +1,7 @@
-import { gameRoll } from './dice.js?v=mvwrcxwr';
-import { positionKey } from './utils.js?v=mvwrcxwr';
-import { addFloatingText } from './ui.js?v=mvwrcxwr';
-import { addStatusEffect, updateDerivedStats } from './party.js?v=mvwrcxwr';
+import { gameRoll } from './dice.js?v=mvwrjkpo';
+import { positionKey } from './utils.js?v=mvwrjkpo';
+import { addFloatingText } from './ui.js?v=mvwrjkpo';
+import { addStatusEffect, updateDerivedStats } from './party.js?v=mvwrjkpo';
 
 // Each class: basic attack (at-will), spell (costs mana-like "spell charges"),
 // and a power attack (once per N turns cooldown). Damage = dice + stat mod + level scaling + item bonuses.

@@ -1,11 +1,11 @@
-import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwrcxwr';
-import { activeMember } from './state.js?v=mvwrcxwr';
-import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwrcxwr';
-import { positionKey } from './utils.js?v=mvwrcxwr';
-import { nearestAttackTarget } from './combat.js?v=mvwrcxwr';
-import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwrcxwr';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwrcxwr';
-import { hasStatusEffect } from './party.js?v=mvwrcxwr';
+import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwrjkpo';
+import { activeMember } from './state.js?v=mvwrjkpo';
+import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwrjkpo';
+import { positionKey } from './utils.js?v=mvwrjkpo';
+import { nearestAttackTarget } from './combat.js?v=mvwrjkpo';
+import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwrjkpo';
+import { pathDistanceWithin } from './pathfinding.js?v=mvwrjkpo';
+import { hasStatusEffect } from './party.js?v=mvwrjkpo';
 
 const CLASS_AVATARS = {
     fighter: '⚔',
@@ -578,11 +578,16 @@ export function rotateMap(dir) {
     const content = document.getElementById('dungeon-map-content');
     if (!content) return;
     mapRotation = (mapRotation + dir * 90 + 360) % 360;
+    content.style.transition = 'transform 0.5s cubic-bezier(0.33, 1, 0.68, 1)';
     content.style.transform = 'rotate(' + mapRotation + 'deg)';
     content.style.transformOrigin = 'center center';
     // after rotation the scroll metrics change; recenter
-    const vp = document.getElementById('dungeon-map');
-    if (vp) { vp.scrollLeft = (content.scrollWidth - vp.clientWidth) / 2; vp.scrollTop = (content.scrollHeight - vp.clientHeight) / 2; }
+    setTimeout(() => {
+        const vp = document.getElementById('dungeon-map');
+        if (vp) { vp.scrollLeft = (content.scrollWidth - vp.clientWidth) / 2; vp.scrollTop = (content.scrollHeight - vp.clientHeight) / 2; }
+    }, 520);
+    // remove transition after the animation so next drag/zoom is instant
+    setTimeout(() => { content.style.transition = ''; }, 560);
 }
 export function getMapRotation() { return mapRotation; }
 

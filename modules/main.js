@@ -1,15 +1,15 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwrcxwr';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwrcxwr';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers, classPriorityStat } from './party.js?v=mvwrcxwr';
-import { createLogger } from './log.js?v=mvwrcxwr';
-import { LayoutManager } from './layout.js?v=mvwrcxwr';
-import { DiscordRelay } from './discord.js?v=mvwrcxwr';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwrcxwr';
-import { zoomMapAt, setMapZoom, getMapZoom, rotateMap } from './ui.js?v=mvwrcxwr';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwrcxwr';
-import { bindInput } from './input.js?v=mvwrcxwr';
-import { nearestAttackTarget } from './combat.js?v=mvwrcxwr';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwrcxwr';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwrjkpo';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwrjkpo';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers, classPriorityStat } from './party.js?v=mvwrjkpo';
+import { createLogger } from './log.js?v=mvwrjkpo';
+import { LayoutManager } from './layout.js?v=mvwrjkpo';
+import { DiscordRelay } from './discord.js?v=mvwrjkpo';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwrjkpo';
+import { zoomMapAt, setMapZoom, getMapZoom, rotateMap } from './ui.js?v=mvwrjkpo';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwrjkpo';
+import { bindInput } from './input.js?v=mvwrjkpo';
+import { nearestAttackTarget } from './combat.js?v=mvwrjkpo';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwrjkpo';
 
 let game = createGame();
 let gameLog = [];
@@ -91,7 +91,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvwrcxwr').then(m => {
+            import('./actions.js?v=mvwrjkpo').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -206,7 +206,7 @@ function startTurnTimer(seconds) {
         if (turnTimeLeft <= 0) {
             stopTurnTimer();
             logMessage('Turn timer expired.', activeMember(game));
-            import('./actions.js?v=mvwrcxwr').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
+            import('./actions.js?v=mvwrjkpo').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
     }, 1000);
 }
@@ -265,11 +265,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwrcxwr').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwrjkpo').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwrcxwr').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwrjkpo').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -346,7 +346,7 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvwrcxwr').then(m => {
+            import('./actions.js?v=mvwrjkpo').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
@@ -393,7 +393,7 @@ function bindGameUI() {
     function startRotateHold(viewport, e) {
         const rect = viewport.getBoundingClientRect();
         rotDir = e.clientX - rect.left < rect.width / 2 ? -1 : 1; // hold left half CCW, right half CW
-        rotTimer = setInterval(() => rotateMap(rotDir), 180);
+        rotTimer = setInterval(() => rotateMap(rotDir), 340);
     }
     function stopRotateHold() { if (rotTimer) { clearInterval(rotTimer); rotTimer = null; } }
     window._pdcRotate = rotateMap;
@@ -590,8 +590,8 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvwrcxwr';
-import { removePartyMember } from './party.js?v=mvwrcxwr';
+import { movementAllowance } from './party.js?v=mvwrjkpo';
+import { removePartyMember } from './party.js?v=mvwrjkpo';
 
 
 function setupDiscordRelay() {
@@ -621,10 +621,10 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvwrcxwr';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwrcxwr';
-import { castAbility } from './actions.js?v=mvwrcxwr';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwrcxwr';
+import { initAudio, playSound } from './audio.js?v=mvwrjkpo';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwrjkpo';
+import { castAbility } from './actions.js?v=mvwrjkpo';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwrjkpo';
 
 function bindAudioControls() {
     initAudio();
