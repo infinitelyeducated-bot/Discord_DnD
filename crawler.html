@@ -1738,7 +1738,7 @@
                 <button id="remove-member-btn" style="background:#f44336;" disabled>– Remove Active</button>
             </div>
             <div class="network-section">
-                <button id="network-button" type="button" style="background:#2196f3; color:#fff;">Network</button>
+                <button id="network-button" type="button" style="background:#5865F2; color:#fff;">Discord & Turn Options</button>
                 <span id="network-status-right" class="network-status">Offline</span>
             </div>
         </section>
@@ -1772,7 +1772,6 @@
                 <section class="party-load" aria-label="Party loadout">
                     <h2 class="panel-title" style="font-size:0.85rem; padding-bottom:4px; margin-bottom:6px;">PARTY LOAD</h2>
                     <div id="inventory-panel">No items.</div>
-                    <div id="network-status" class="network-status" style="margin-top:8px;">Offline</div>
                     <div id="discord-status" class="network-status" style="margin-top:4px; font-size:0.8rem; opacity:0.85;">Discord relay: off</div>
                 </section>
             </div>
@@ -2029,40 +2028,16 @@
     </dialog>
 
     <dialog id="network-dialog" aria-labelledby="network-dialog-title">
-        <h2 id="network-dialog-title">Network Game</h2>
-        <p style="font-size:0.8rem; margin-bottom:10px;">Host a game or join another player on the same LAN/WAN. All players must have this page open.</p>
-        <label style="display:flex; flex-direction:column; gap:4px; margin-bottom:10px; font-size:0.8rem;">
-            Signaling server
-                    <input id="signaling-url" type="text" value="ws://localhost:8080" style="padding:6px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">
-        </label>
-        <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:0.8rem;">
-            <input id="host-as-gm" type="checkbox"> Host as GM (spectator, no assigned character)
-        </label>
-        <div style="display:grid; gap:10px; margin-bottom:10px;">
-            <button id="host-button" type="button" style="background:#4caf50;">Host Game</button>
-            <div style="display:flex; gap:8px;">
-                <input id="join-host-id" type="text" placeholder="Host ID" style="flex:1; padding:6px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">
-                <button id="join-button" type="button" style="background:#2196f3; color:#fff;">Join</button>
-            </div>
-        </div>
-        <p id="host-id-display" style="color:#ffcc00; font-size:0.85rem; min-height:1.2em;"></p>
-        <p id="network-mode" style="color:#b9b3a3; font-size:0.75rem; min-height:1.2em;"></p>
-        <div id="lobby-section" style="display:none; margin-top:12px; padding:12px; border:1px solid #4a4a6a; border-radius:6px; background:#12121a;">
-            <h3 style="color:#ffcc00; margin:0 0 8px; font-size:0.85rem;">Pre-Game Lobby</h3>
-            <ul id="lobby-roster" style="list-style:none; padding:0; margin:0 0 10px; font-size:0.8rem; line-height:1.6;"></ul>
-            <div id="lobby-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button id="ready-button" type="button" style="background:#2196f3; color:#fff; flex:1; min-width:90px;">Ready</button>
-                <button id="start-game-button" type="button" style="display:none; background:#4caf50; color:#fff; flex:1; min-width:90px;">Start Game</button>
-            </div>
-        </div>
-        <div style="margin-top:12px; padding-top:12px; border-top:1px solid #4a4a6a;">
-            <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; margin-bottom:8px;">
+        <h2 id="network-dialog-title">Discord & Turn Options</h2>
+        <div class="modal-body">
+            <p class="muted">Multiplayer in this edition runs through the Discord relay. The DM's copy shares the screen; players join through Discord and see the chat and action log here.</p>
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; margin:10px 0;">
                 <input id="turn-timer-toggle" type="checkbox"> Turn timer
                 <input id="turn-timer-seconds" type="number" min="10" max="300" value="60" style="width:60px; padding:4px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">s
             </label>
             <div id="turn-timer" style="color:#ffcc00; font-size:0.85rem; min-height:1.2em;"></div>
         </div>
-        <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+        <div style="display:flex; justify-content:flex-end;">
             <button id="network-cancel" type="button" class="secondary" style="background:transparent; color:#c0d0ce; border:1px solid #42636a; border-radius:6px;">Close</button>
         </div>
     </dialog>
@@ -2096,6 +2071,6 @@
         window.addEventListener('error', function (e) { window.__pdcLastError = e.message || String(e); }, true);
     })();
     </script>
-    <script type="module" src="modules/main.js?v=mvwinfv6"></script>
+    <script type="module" src="modules/main.js?v=mvwjhe1p"></script>
 </body>
 </html>

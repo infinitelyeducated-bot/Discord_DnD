@@ -1,21 +1,19 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwinfv6';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwinfv6';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwinfv6';
-import { createLogger } from './log.js?v=mvwinfv6';
-import { LayoutManager } from './layout.js?v=mvwinfv6';
-import { DiscordRelay } from './discord.js?v=mvwinfv6';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwinfv6';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwinfv6';
-import { bindInput } from './input.js?v=mvwinfv6';
-import { handleRemoteAction, sendLocalAction, confirmLocalAction, rejectLocalAction } from './network-actions.js?v=mvwinfv6';
-import { nearestAttackTarget } from './combat.js?v=mvwinfv6';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwinfv6';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwjhe1p';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwjhe1p';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwjhe1p';
+import { createLogger } from './log.js?v=mvwjhe1p';
+import { LayoutManager } from './layout.js?v=mvwjhe1p';
+import { DiscordRelay } from './discord.js?v=mvwjhe1p';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwjhe1p';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwjhe1p';
+import { bindInput } from './input.js?v=mvwjhe1p';
+import { nearestAttackTarget } from './combat.js?v=mvwjhe1p';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwjhe1p';
 
 let game = createGame();
 let gameLog = [];
 let logMessage = createLogger(gameLog, appendLogRecord);
 let layoutManager = new LayoutManager();
-let networkManager = null;
 let discordRelay = null;
 
 // In the browser, keep the turn lock for at least this long so a double-click on
@@ -92,7 +90,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvwinfv6').then(m => {
+            import('./actions.js?v=mvwjhe1p').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -186,126 +184,34 @@ function renderSavedLog() {
     for (const record of gameLog) appendLogRecord(record);
 }
 
-function broadcast(data) {
-    if (networkManager && networkManager.mode) {
-        if (data.type === 'state') {
-            networkManager.broadcast({ type: 'sync', game });
-        } else {
-            networkManager.broadcast(data);
-        }
-    }
+function broadcast() {
+    // Discord relay is the only network path in this edition; game state is
+    // not synced between copies (the DM's screen is the shared view).
 }
 
-function setupNetworkHandlers() {
-    if (!networkManager) return;
-    networkManager.addEventListener('status', event => {
-        document.getElementById('network-status').textContent = event.detail;
-        const rightStatus = document.getElementById('network-status-right');
-        if (rightStatus) rightStatus.textContent = event.detail;
-    });
-    networkManager.addEventListener('peerConnected', event => {
-        const { peerId, reconnect } = event.detail;
-        logMessage(`Peer ${peerId} connected${reconnect ? ' (reconnect)' : ''}.`, null, 'Network');
-        if (networkManager.isHost) {
-            const assigned = assignPeerToMember(peerId, reconnect);
-            networkManager.sendTo(peerId, { type: 'state', game, yourMemberId: assigned });
-            for (const message of networkManager.chatLog) {
-                networkManager.sendTo(peerId, message);
-            }
-            networkManager.broadcast({ type: 'sync', game });
-        }
-        renderLobbyRoster();
-        checkStartGameEnabled();
-    });
-    networkManager.addEventListener('peerDisconnected', event => {
-        const disconnectedPeerId = event.detail.peerId;
-        const memberId = networkManager.getAssignedMemberId(disconnectedPeerId);
-        const member = memberId ? game.party.find(m => m.id === memberId) : null;
-        if (member) {
-            logMessage(`${member.name} is no longer controlled by a remote player (peer ${disconnectedPeerId} disconnected).`, null, 'Network');
-        }
-        logMessage(`Peer ${disconnectedPeerId} disconnected.`, null, 'Network');
-        renderLobbyRoster();
-        checkStartGameEnabled();
-    });
-    function checkStartGameEnabled() {
-        const startGameButton = document.getElementById('start-game-button');
-        if (!networkManager?.isHost || !startGameButton) return;
-        const peers = [networkManager.peerId, ...networkManager.connections.keys()];
-        const allReady = peers.length > 1 && peers.every(peerId => networkManager.readyPeers.has(peerId));
-        startGameButton.disabled = !allReady;
-        startGameButton.style.opacity = allReady ? '1' : '0.5';
-    }
 
-    networkManager.addEventListener('readyChanged', event => {
-        const { peerId, ready } = event.detail;
-        if (networkManager.isHost) {
-            logMessage(`Peer ${peerId} is ${ready ? 'ready' : 'not ready'}.`, null, 'Network');
+// Turn timer (local): ends the active turn when the countdown reaches zero.
+let turnTimer = null;
+let turnTimeLeft = 0;
+let turnTimerDuration = 0;
+function startTurnTimer(seconds) {
+    stopTurnTimer();
+    turnTimerDuration = seconds;
+    turnTimeLeft = seconds;
+    const timerDisplay = document.getElementById('turn-timer');
+    turnTimer = window.setInterval(() => {
+        turnTimeLeft--;
+        if (timerDisplay) timerDisplay.textContent = turnTimeLeft + 's / ' + turnTimerDuration + 's';
+        if (turnTimeLeft <= 0) {
+            stopTurnTimer();
+            logMessage('Turn timer expired.', activeMember(game));
+            import('./actions.js?v=mvwjhe1p').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
-        renderLobbyRoster();
-        checkStartGameEnabled();
-    });
-
-    networkManager.addEventListener('startGame', () => {
-        logMessage('Game started!', null, 'Network');
-        document.getElementById('lobby-section').style.display = 'none';
-    });
-
-    networkManager.addEventListener('message', event => {
-        const { peerId, data } = event.detail;
-        if (data.type === 'state') {
-            game = data.game; game.turnEndMinMs = TURN_END_MIN_MS;
-            if (data.yourMemberId) networkManager.setLocalMemberId(data.yourMemberId);
-            updateUI();
-        } else if (data.type === 'action') {
-            handleRemoteAction(game, networkManager, { peerId, ...data }, logMessage, updateUI, broadcast);
-        } else if (data.type === 'sync') {
-            game = data.game; game.turnEndMinMs = TURN_END_MIN_MS;
-            updateUI();
-        } else if (data.type === 'actionConfirmed') {
-            confirmLocalAction(data.actionId);
-            game = data.game; game.turnEndMinMs = TURN_END_MIN_MS;
-            updateUI();
-        } else if (data.type === 'actionRejected') {
-            rejectLocalAction(data.actionId);
-            logMessage(`Action rejected: ${data.reason}`, activeMember(game));
-        } else if (data.type === 'chat') {
-            appendChatMessage(data);
-        } else if (data.type === 'ready') {
-            if (networkManager.isHost) networkManager.handleReady(data.peerId, data.ready);
-            renderLobbyRoster();
-            checkStartGameEnabled();
-        } else if (data.type === 'lobbyState') {
-            networkManager.readyPeers = new Set(data.readyPeers);
-            networkManager.lobbyStarted = data.lobbyStarted;
-            renderLobbyRoster();
-            checkStartGameEnabled();
-            if (networkManager.lobbyStarted) {
-                document.getElementById('lobby-section').style.display = 'none';
-            }
-        } else if (data.type === 'startGame') {
-            document.getElementById('lobby-section').style.display = 'none';
-        } else if (data.type === 'lobbyReset') {
-            networkManager.readyPeers.clear();
-            networkManager.lobbyStarted = false;
-            renderLobbyRoster();
-        }
-    });
-    networkManager.addEventListener('turnTick', event => {
-        const { timeLeft, duration } = event.detail;
-        const timerDisplay = document.getElementById('turn-timer');
-        if (timerDisplay) timerDisplay.textContent = `${timeLeft}s / ${duration}s`;
-    });
-    networkManager.addEventListener('turnTimeout', () => {
-        logMessage('Turn timer expired.', activeMember(game));
-        if (!networkManager.isHost) {
-            sendLocalAction(networkManager, 'endTurn', {});
-        } else {
-            import('./actions.js?v=mvwinfv6').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
-        }
-    });
+    }, 1000);
 }
-
+function stopTurnTimer() {
+    if (turnTimer) { window.clearInterval(turnTimer); turnTimer = null; }
+}
 function appendChatMessage(message) {
     handleChatBubble(message);
     const chatLog = document.getElementById('chat-log');
@@ -322,140 +228,6 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-function assignPeerToMember(peerId, reconnect = false) {
-    const used = new Set([networkManager.localMemberId]);
-    for (const conn of networkManager.connections.values()) {
-        if (conn.assignedMemberId) used.add(conn.assignedMemberId);
-    }
-    let chosen = null;
-    if (reconnect) {
-        const previous = networkManager.getRestoredAssignment(peerId);
-        const previousMember = previous ? game.party.find(m => m.id === previous && m.hp > 0) : null;
-        if (previousMember && !used.has(previous)) {
-            chosen = previousMember;
-            logMessage(`${chosen.name} reassigned to reconnected peer ${peerId}.`, null, 'Network');
-        }
-    }
-    if (!chosen) {
-        chosen = game.party.find(m => m.hp > 0 && !used.has(m.id));
-    }
-    if (chosen) {
-        networkManager.assignMember(peerId, chosen.id);
-        if (!reconnect) logMessage(`${chosen.name} is now controlled by peer ${peerId}.`, null, 'Network');
-        return chosen.id;
-    }
-    logMessage(`Peer ${peerId} connected, but no party members are available to assign.`, null, 'Network');
-    return null;
-}
-
-function bindNetworkUI() {
-    const dialog = document.getElementById('network-dialog');
-    const lobbySection = document.getElementById('lobby-section');
-    const lobbyRoster = document.getElementById('lobby-roster');
-    const readyButton = document.getElementById('ready-button');
-    const startGameButton = document.getElementById('start-game-button');
-
-    function renderLobbyRoster() {
-        if (!networkManager || !lobbyRoster) return;
-        const peers = [networkManager.peerId];
-        for (const peerId of networkManager.connections.keys()) {
-            if (!peers.includes(peerId)) peers.push(peerId);
-        }
-        lobbyRoster.replaceChildren();
-        for (const peerId of peers) {
-            const ready = networkManager.readyPeers.has(peerId);
-            const li = document.createElement('li');
-            li.textContent = `${peerId} ${peerId === networkManager.peerId ? '(you)' : ''}: ${ready ? 'Ready' : 'Not Ready'}`;
-            li.style.color = ready ? '#76ff03' : '#ff5252';
-            lobbyRoster.appendChild(li);
-        }
-    }
-
-    document.getElementById('network-button')?.addEventListener('click', () => dialog?.showModal());
-    document.getElementById('network-cancel')?.addEventListener('click', () => dialog?.close());
-    document.getElementById('host-button')?.addEventListener('click', async () => {
-        const url = document.getElementById('signaling-url').value;
-        const hostAsGm = document.getElementById('host-as-gm')?.checked ?? false;
-        networkManager = new NetworkManager();
-        setupNetworkHandlers();
-        try {
-            const id = await networkManager.startHost(url, { hostAsGm });
-            game.requireAllReady = true;
-            document.getElementById('host-id-display').textContent = id;
-            document.getElementById('network-mode').textContent = hostAsGm ? 'Hosting as GM' : 'Hosting';
-            if (lobbySection) lobbySection.style.display = 'block';
-            if (readyButton) readyButton.style.display = 'inline-block';
-            if (startGameButton) {
-                startGameButton.style.display = networkManager.isHost ? 'inline-block' : 'none';
-                startGameButton.disabled = true;
-                startGameButton.style.opacity = '0.5';
-            }
-            renderLobbyRoster();
-        } catch (error) {
-            alert('Could not start host: ' + error.message);
-        }
-    });
-    document.getElementById('join-button')?.addEventListener('click', async () => {
-        const url = document.getElementById('signaling-url').value;
-        const hostId = document.getElementById('join-host-id').value.trim();
-        if (!hostId) return;
-        networkManager = new NetworkManager();
-        setupNetworkHandlers();
-        try {
-            await networkManager.joinHost(hostId, url);
-            document.getElementById('network-mode').textContent = `Client of ${hostId}`;
-            if (lobbySection) lobbySection.style.display = 'block';
-            if (readyButton) readyButton.style.display = 'inline-block';
-            if (startGameButton) startGameButton.style.display = 'none';
-            renderLobbyRoster();
-        } catch (error) {
-            alert('Could not join host: ' + error.message);
-        }
-    });
-
-    readyButton?.addEventListener('click', () => {
-        if (!networkManager) return;
-        const nextReady = !networkManager.readyPeers.has(networkManager.peerId);
-        networkManager.setReady(nextReady);
-        readyButton.textContent = nextReady ? 'Not Ready' : 'Ready';
-        readyButton.style.background = nextReady ? '#ff5252' : '#2196f3';
-    });
-
-    startGameButton?.addEventListener('click', () => {
-        if (!networkManager?.isHost) return;
-        networkManager.startGame();
-        lobbySection.style.display = 'none';
-    });
-
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    chatForm?.addEventListener('submit', event => {
-        event.preventDefault();
-        const text = chatInput.value.trim();
-        if (!text) return;
-        const sender = networkManager?.peerId || 'You';
-        const msg = { type: 'chat', sender, text, timestamp: Date.now() };
-        if (networkManager?.mode) {
-            networkManager.sendChat(text);
-        }
-        if (discordRelay?.isDm) discordRelay.relayChat(text, sender);
-        appendChatMessage(msg);
-        chatInput.value = '';
-    });
-
-    document.getElementById('turn-timer-toggle')?.addEventListener('change', event => {
-        const seconds = Number(document.getElementById('turn-timer-seconds')?.value || 60);
-        const timerDisplay = document.getElementById('turn-timer');
-        if (event.target.checked) {
-            networkManager?.startTurnTimer(seconds);
-            if (timerDisplay) timerDisplay.textContent = `${seconds}s / ${seconds}s`;
-        } else {
-            networkManager?.stopTurnTimer();
-            if (timerDisplay) timerDisplay.textContent = '';
-        }
-    });
 }
 
 function bindGameUI() {
@@ -504,11 +276,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwinfv6').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwjhe1p').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwinfv6').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwjhe1p').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -585,7 +357,7 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvwinfv6').then(m => {
+            import('./actions.js?v=mvwjhe1p').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
@@ -602,6 +374,33 @@ function bindGameUI() {
         if (layoutManager.layoutEditMode) document.getElementById('escape-menu').close();
     });
     document.getElementById('reset-layout-button')?.addEventListener('click', () => layoutManager.reset());
+
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    chatForm?.addEventListener('submit', event => {
+        event.preventDefault();
+        const text = chatInput.value.trim();
+        if (!text) return;
+        const sender = 'You';
+        if (discordRelay?.isDm) discordRelay.relayChat(text, sender);
+        appendChatMessage({ type: 'chat', sender, text, timestamp: Date.now() });
+        chatInput.value = '';
+    });
+
+    const discordButton = document.getElementById('network-button');
+    const discordDialog = document.getElementById('network-dialog');
+    discordButton?.addEventListener('click', () => discordDialog?.showModal());
+    discordDialog?.addEventListener('click', event => {
+        if (event.target === discordDialog) discordDialog.close();
+    });
+
+    const cancelBtn = document.getElementById('network-cancel');
+    cancelBtn?.addEventListener('click', () => document.getElementById('network-dialog')?.close());
+    document.getElementById('turn-timer-toggle')?.addEventListener('change', event => {
+        const seconds = Number(document.getElementById('turn-timer-seconds')?.value || 60);
+        if (event.target.checked) startTurnTimer(seconds);
+        else { stopTurnTimer(); const td = document.getElementById('turn-timer'); if (td) td.textContent = ''; }
+    });
 
     document.getElementById('character-sheet-list')?.addEventListener('change', event => {
         if (!(event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement)) return;
@@ -642,16 +441,7 @@ function handleReadyToggle(box) {
         member.ready = false;
         logMessage(`${member.name} is no longer ready.`, member);
     }
-    if (networkManager?.mode) {
-        if (networkManager.isHost) {
-            networkManager.broadcast({ type: 'sync', game });
-            maybeAnnounceAllReady();
-        } else {
-            sendLocalAction(networkManager, 'setReady', { memberId: member.id, ready: member.ready });
-        }
-    } else {
-        maybeAnnounceAllReady();
-    }
+    maybeAnnounceAllReady();
     updateUI();
 }
 
@@ -660,8 +450,8 @@ function maybeAnnounceAllReady() {
     const allReady = game.party.length > 0 && game.party.every(m => m.ready === true);
     if (allReady) {
         logMessage('All players are locked in and ready — the adventure can begin! (Any move starts the game.)', null, 'Game Master');
-        if (networkManager?.isHost) {
-            networkManager.broadcast({ type: 'chat', sender: 'Game', text: 'All players ready — host may start!', timestamp: Date.now() });
+        if (discordRelay?.isDm) {
+            discordRelay.relayChat('All players are locked in and ready — the adventure can begin!', 'Game Master');
         }
     }
 }
@@ -779,8 +569,8 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvwinfv6';
-import { removePartyMember } from './party.js?v=mvwinfv6';
+import { movementAllowance } from './party.js?v=mvwjhe1p';
+import { removePartyMember } from './party.js?v=mvwjhe1p';
 
 
 function setupDiscordRelay() {
@@ -796,7 +586,6 @@ function setupDiscordRelay() {
 }
 
 function startFloatingTextLoop() {
-    window.__pdcNet = networkManager;
     setupDiscordRelay();
     let last = performance.now();
     function frame(now) {
@@ -810,21 +599,17 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvwinfv6';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwinfv6';
-import { castAbility } from './actions.js?v=mvwinfv6';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwinfv6';
+import { initAudio, playSound } from './audio.js?v=mvwjhe1p';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwjhe1p';
+import { castAbility } from './actions.js?v=mvwjhe1p';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwjhe1p';
 
 function bindAudioControls() {
     initAudio();
 }
 
 function localOrSendAbility(slot) {
-    if (networkManager?.mode && !networkManager.isHost) {
-        sendLocalAction(networkManager, 'ability', { slot });
-    } else {
-        castAbility(game, slot, logMessage, updateUI, broadcast);
-    }
+    castAbility(game, slot, logMessage, updateUI, broadcast);
 }
 
 function bindAbilityUI() {
@@ -898,7 +683,9 @@ function bindDicePanel() {
         appendDiceLog(`You: ${count}${type} [${result.rolls.join(', ')}]${mod ? (mod > 0 ? ' +' : ' ') + mod : ''} = ${result.total}${crit ? ' CRIT!' : ''}${fail ? ' (nat 1)' : ''}`, crit ? 'dice-crit' : fail ? 'dice-fail' : '');
         playSound('treasure');
         logMessage(`rolls ${count}${type}${mod ? (mod > 0 ? '+' : '') + mod : ''}: [${result.rolls.join(', ')}] = ${result.total}${crit ? ' — natural 20!' : ''}${fail ? ' — natural 1!' : ''}`, activeMember(game));
-        if (networkManager?.mode) networkManager.broadcast({ type: 'chat', sender: networkManager.peerId, text: `\u{1F3B2} ${count}${type} = ${result.total}`, timestamp: Date.now() });
+                if (discordRelay?.isDm) {
+            discordRelay.relayChat(`🎲 ${count}${type} = ${result.total}`, 'Dice');
+        }
     };
     document.getElementById('dice-roll-btn')?.addEventListener('click', doRoll);
     const advRoll = dir => {
@@ -943,12 +730,11 @@ window.addEventListener('DOMContentLoaded', () => {
         initGame();
         renderSavedLog();
         updateUI();
-        bindInput(game, logMessage, updateUI, broadcast, networkManager);
+        bindInput(game, logMessage, updateUI, broadcast);
         bindGameUI();
         bindAbilityUI();
         bindDicePanel();
         populateSaveSlotSelect();
-        bindNetworkUI();
         bindAudioControls();
         bindErrorBoundary();
         startFloatingTextLoop();

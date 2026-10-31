@@ -2,7 +2,7 @@
 // id) or falls back to a floating tag near the map viewport for senders that
 // have no character. Bubbles fade out after BUBBLE_MS and are placed once per
 // frame (the map is a scrolled grid, so a bubble must track its cell).
-import { renderFloatingTexts, updateFloatingTexts } from './ui.js?v=mvwinfv6';
+import { renderFloatingTexts, updateFloatingTexts } from './ui.js?v=mvwjhe1p';
 
 let BUBBLE_MS = 4000;
 const MAX_BUBBLES = 8     // hard cap per page so a chat storm can't leak DOM
@@ -111,13 +111,7 @@ export function memberFromMessage(message) {
     if (!game) return null;
     // by member id if the message carries one
     if (message.memberId) return game.party.find(m => m.id === message.memberId) || null;
-    // by peer id → assigned member
-    const peerId = message.sender;
-    const nm = window.__pdcNet;
-    if (peerId && typeof peerId === 'string' && nm?.getAssignedMemberId) {
-        const mid = nm.getAssignedMemberId(peerId);
-        if (mid) return game.party.find(m => m.id === mid) || null;
-    }
+    // (LAN peer-to-member assignment removed in this edition)
     // by name
     if (message.sender && typeof message.sender === 'string') {
         return game.party.find(m => m.name.toLowerCase() === message.sender.toLowerCase()) || null;

@@ -1,22 +1,12 @@
-import { move, attack, standGuard, rest, finishTurn, setFormation, setGameDifficulty, useInventoryItem } from './actions.js?v=mvwinfv6';
-import { sendLocalAction } from './network-actions.js?v=mvwinfv6';
-import { activeMember } from './state.js?v=mvwinfv6';
-import { nearestAttackTarget } from './combat.js?v=mvwinfv6';
-import { adjacentDeadPartyMembers } from './party.js?v=mvwinfv6';
-import { isWalkable } from './map.js?v=mvwinfv6';
+import { move, attack, standGuard, rest, finishTurn, setFormation, setGameDifficulty, useInventoryItem } from './actions.js?v=mvwjhe1p';
+import { activeMember } from './state.js?v=mvwjhe1p';
+import { nearestAttackTarget } from './combat.js?v=mvwjhe1p';
+import { adjacentDeadPartyMembers } from './party.js?v=mvwjhe1p';
+import { isWalkable } from './map.js?v=mvwjhe1p';
 
-export function bindInput(game, logMessage, updateUI, broadcast, networkManager) {
+export function bindInput(game, logMessage, updateUI, broadcast) {
     function localOrSend(action, args, executor) {
-        const member = activeMember(game);
-        const localPlayer = !networkManager || !networkManager.mode || networkManager.isHost;
-        const controlsLocalMember = !networkManager?.localMemberId || member?.id === networkManager.localMemberId;
-        if (localPlayer && controlsLocalMember) {
-            executor();
-            return;
-        }
-        if (networkManager && !networkManager.isHost && member?.id === networkManager.localMemberId) {
-            sendLocalAction(networkManager, action, args);
-        }
+        executor();
     }
 
     document.addEventListener('keydown', event => {

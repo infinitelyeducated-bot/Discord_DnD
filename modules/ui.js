@@ -1,11 +1,11 @@
-import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwinfv6';
-import { activeMember } from './state.js?v=mvwinfv6';
-import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwinfv6';
-import { positionKey } from './utils.js?v=mvwinfv6';
-import { nearestAttackTarget } from './combat.js?v=mvwinfv6';
-import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwinfv6';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwinfv6';
-import { hasStatusEffect } from './party.js?v=mvwinfv6';
+import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwjhe1p';
+import { activeMember } from './state.js?v=mvwjhe1p';
+import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwjhe1p';
+import { positionKey } from './utils.js?v=mvwjhe1p';
+import { nearestAttackTarget } from './combat.js?v=mvwjhe1p';
+import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwjhe1p';
+import { pathDistanceWithin } from './pathfinding.js?v=mvwjhe1p';
+import { hasStatusEffect } from './party.js?v=mvwjhe1p';
 
 const CLASS_AVATARS = {
     fighter: '⚔',
@@ -424,7 +424,7 @@ function buildCharacterSheet(game, member, index) {
     }
     const readyLabel = document.createElement('label');
     readyLabel.className = 'sheet-ready-label';
-    readyLabel.title = 'Lock in this player: name, class and points become final. In network games the host can start once every player is ready.';
+    readyLabel.title = 'Lock in this player: name, class and points become final.';
     const readyBox = document.createElement('input');
     readyBox.type = 'checkbox';
     readyBox.className = 'sheet-ready-box';
