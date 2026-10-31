@@ -1,11 +1,11 @@
-import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwq2xf0';
-import { activeMember } from './state.js?v=mvwq2xf0';
-import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwq2xf0';
-import { positionKey } from './utils.js?v=mvwq2xf0';
-import { nearestAttackTarget } from './combat.js?v=mvwq2xf0';
-import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwq2xf0';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwq2xf0';
-import { hasStatusEffect } from './party.js?v=mvwq2xf0';
+import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwqbkdq';
+import { activeMember } from './state.js?v=mvwqbkdq';
+import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwqbkdq';
+import { positionKey } from './utils.js?v=mvwqbkdq';
+import { nearestAttackTarget } from './combat.js?v=mvwqbkdq';
+import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwqbkdq';
+import { pathDistanceWithin } from './pathfinding.js?v=mvwqbkdq';
+import { hasStatusEffect } from './party.js?v=mvwqbkdq';
 
 const CLASS_AVATARS = {
     fighter: '⚔',
@@ -538,11 +538,30 @@ function buildStatusTooltip(member) {
     return member.statusEffects.map(e => `${e.type} (${e.duration} turns)`).join(', ');
 }
 
+let mapZoom = 1; // mouse-wheel zoom factor (1 = default)
+const MAP_ZOOM_MIN = 0.5, MAP_ZOOM_MAX = 3;
+export function zoomMapAt(delta, clientX, clientY) {
+    const viewport = document.getElementById('dungeon-map');
+    if (!viewport) return;
+    const before = viewport.clientWidth;
+    mapZoom = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, mapZoom * (delta > 0 ? 1.15 : 1 / 1.15)));
+    updateMapSizing();
+    const after = viewport.clientWidth;
+    // keep the point under the cursor stable
+    if (clientX !== undefined && clientY !== undefined) {
+        const ratio = after / before;
+        viewport.scrollLeft = (viewport.scrollLeft + clientX) * ratio - clientX;
+        viewport.scrollTop = (viewport.scrollTop + clientY) * ratio - clientY;
+    }
+}
+export function setMapZoom(z) { mapZoom = Math.min(MAP_ZOOM_MAX, Math.max(MAP_ZOOM_MIN, z)); updateMapSizing(); }
+export function getMapZoom() { return mapZoom; }
+
 export function updateMapSizing() {
     const mapViewport = document.getElementById('dungeon-map');
     const mapContent = document.getElementById('dungeon-map-content');
     if (!mapViewport || !mapContent) return;
-    const fontSize = Math.max(7.5, Math.min(11.25, mapViewport.clientWidth / 25.6));
+    const fontSize = Math.max(7.5, Math.min(11.25, (mapViewport.clientWidth / 25.6))) * mapZoom;
     mapViewport.style.fontSize = `${fontSize}px`;
     mapContent.style.padding = `${mapViewport.clientHeight / 2}px ${mapViewport.clientWidth / 2}px`;
 }

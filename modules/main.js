@@ -1,14 +1,15 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwq2xf0';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwq2xf0';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwq2xf0';
-import { createLogger } from './log.js?v=mvwq2xf0';
-import { LayoutManager } from './layout.js?v=mvwq2xf0';
-import { DiscordRelay } from './discord.js?v=mvwq2xf0';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwq2xf0';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwq2xf0';
-import { bindInput } from './input.js?v=mvwq2xf0';
-import { nearestAttackTarget } from './combat.js?v=mvwq2xf0';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwq2xf0';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwqbkdq';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwqbkdq';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwqbkdq';
+import { createLogger } from './log.js?v=mvwqbkdq';
+import { LayoutManager } from './layout.js?v=mvwqbkdq';
+import { DiscordRelay } from './discord.js?v=mvwqbkdq';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwqbkdq';
+import { zoomMapAt, setMapZoom, getMapZoom } from './ui.js?v=mvwqbkdq';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwqbkdq';
+import { bindInput } from './input.js?v=mvwqbkdq';
+import { nearestAttackTarget } from './combat.js?v=mvwqbkdq';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwqbkdq';
 
 let game = createGame();
 let gameLog = [];
@@ -90,7 +91,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvwq2xf0').then(m => {
+            import('./actions.js?v=mvwqbkdq').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -205,7 +206,7 @@ function startTurnTimer(seconds) {
         if (turnTimeLeft <= 0) {
             stopTurnTimer();
             logMessage('Turn timer expired.', activeMember(game));
-            import('./actions.js?v=mvwq2xf0').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
+            import('./actions.js?v=mvwqbkdq').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
     }, 1000);
 }
@@ -264,11 +265,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwq2xf0').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwqbkdq').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwq2xf0').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwqbkdq').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -345,13 +346,27 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvwq2xf0').then(m => {
+            import('./actions.js?v=mvwqbkdq').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
         }
     });
     document.getElementById('reset-game-button')?.addEventListener('click', startNewGame);
+    const zoomLabel = document.getElementById('zoom-level');
+    const showZoom = () => { if (zoomLabel) zoomLabel.textContent = Math.round(getMapZoom() * 100) + '%'; };
+    const mapViewport = document.getElementById('dungeon-map');
+    mapViewport?.addEventListener('wheel', event => {
+        event.preventDefault();
+        const rect = mapViewport.getBoundingClientRect();
+        zoomMapAt(-Math.sign(event.deltaY), event.clientX - rect.left, event.clientY - rect.top);
+    }, { passive: false });
+    mapViewport?.addEventListener('mouseenter', () => { mapViewport.style.cursor = 'zoom-in'; });
+    mapViewport?.addEventListener('mouseleave', () => { mapViewport.style.cursor = ''; });
+    document.getElementById('zoom-in')?.addEventListener('click', () => { setMapZoom(getMapZoom() * 1.2); showZoom(); });
+    document.getElementById('zoom-out')?.addEventListener('click', () => { setMapZoom(getMapZoom() / 1.2); showZoom(); });
+    showZoom();
+
     document.getElementById('fullscreen-toggle')?.addEventListener('click', () => {
         document.getElementById('map-column')?.classList.toggle('fullscreen');
         updateMapSizing();
@@ -545,8 +560,8 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvwq2xf0';
-import { removePartyMember } from './party.js?v=mvwq2xf0';
+import { movementAllowance } from './party.js?v=mvwqbkdq';
+import { removePartyMember } from './party.js?v=mvwqbkdq';
 
 
 function setupDiscordRelay() {
@@ -576,10 +591,10 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvwq2xf0';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwq2xf0';
-import { castAbility } from './actions.js?v=mvwq2xf0';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwq2xf0';
+import { initAudio, playSound } from './audio.js?v=mvwqbkdq';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwqbkdq';
+import { castAbility } from './actions.js?v=mvwqbkdq';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwqbkdq';
 
 function bindAudioControls() {
     initAudio();
