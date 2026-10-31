@@ -75,7 +75,7 @@ wss.on('connection', (ws, req) => {
 function startServer(port = DEFAULT_PORT) {
     server.listen(port, () => {
         const addresses = getLocalAddresses();
-        console.log(`PixelBear Dungeon Crawler server running on port ${port}`);
+        console.log(`Discord D&D dungeon server running on port ${port}`);
         console.log('Local URLs:');
         for (const addr of addresses) {
             console.log(`  http://${addr}:${port}/crawler.html`);

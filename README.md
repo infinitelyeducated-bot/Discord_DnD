@@ -1,10 +1,10 @@
-# PixelBear's ASCII Dungeon Crawler
+# Discord D&D — Dungeon Crawler
 
 A party-based ASCII dungeon crawler that runs in the browser. Supports local play and LAN/WAN multiplayer via WebRTC.
 
 ## Quick start
 
-Double-click **`Run_Game_Server_PixelBear_Dungeon_Crawler.cmd`**. The word *Server* is in the name on purpose: this launcher starts a **network-accessible server**, so it first shows a red warning screen (what it starts, the port, and that other devices on your network can reach it) and only continues if you type `YES`. Anything else cancels and nothing is started. After you confirm, it installs dependencies on first run, starts the server and opens the game in your browser. Keep its window open while you play; close it to stop the server.
+Double-click **`Run_Game_Server_Discord_DnD.cmd`**. The word *Server* is in the name on purpose; this launcher starts a **network-accessible server**, so it first shows a red warning screen (what it starts, the port, and that other devices on your network can reach it) and only continues if you type `YES`. Anything else cancels and nothing is started. After you confirm, it installs dependencies on first run, starts the server and opens the game in your browser. Keep its window open while you play; close it to stop the server.
 
 Playing alone? Use the single-file edition below instead, which opens a page and starts no server.
 
