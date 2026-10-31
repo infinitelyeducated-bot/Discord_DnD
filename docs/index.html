@@ -1,0 +1,2059 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelBear's Ascii Dungeon Crawler</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        body {
+            background: #1a1a1a;
+            color: #e0d6b8;
+            min-height: 100vh;
+            padding: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .game-brand {
+            color: #ffcc00;
+            text-shadow: 0 0 5px rgba(255, 204, 0, 0.7);
+            margin: 0;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .game-help {
+            color: #b9b3a3;
+            margin-bottom: 5px;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+        
+        .game-container {
+            display: block;
+            max-width: 1700px;
+            width: 100%;
+            margin: 0 auto;
+            padding-top: 10px;
+        }
+        
+        .dungeon-view {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            background: #0a0a0a;
+            border: 3px solid #ffcc00;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            display: grid;
+            grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(180px, 220px);
+            align-items: start;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .center-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            text-align: center;
+        }
+
+        .top-party-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .top-party-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 8px;
+            border: 1px solid #4a4a6a;
+            border-radius: 5px;
+            background: #141421;
+            font-size: 0.72rem;
+        }
+
+        .top-party-item.active {
+            border-color: #ffe14d;
+            outline: 2px solid #ffe14d;
+            outline-offset: 1px;
+            background: #1a1a28;
+        }
+
+        .top-party-avatar {
+            font-size: 1.1rem;
+        }
+
+        .party-load {
+            padding: 8px;
+            border: 2px solid #4a4a6a;
+            border-radius: 8px;
+            background: #141421;
+            font-size: 0.75rem;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+
+        .party-load h4 {
+            color: #ffcc00;
+            margin: 8px 0 4px;
+            font-size: 0.8rem;
+        }
+
+        .main-stage {
+            display: grid;
+            grid-template-columns: minmax(260px, 340px) minmax(0, 1fr) minmax(200px, 230px);
+            grid-template-rows: minmax(320px, 1fr) minmax(140px, 170px);
+            grid-template-areas:
+                "map map side"
+                "chat log side";
+            align-items: stretch;
+            gap: 10px;
+            min-height: 520px;
+            max-height: 640px;
+        }
+
+        .map-column {
+            grid-area: map;
+            display: grid;
+            grid-template-rows: 1fr;
+            align-items: stretch;
+            justify-items: stretch;
+            min-width: 0;
+            min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #4a4a6a;
+            border-radius: 8px;
+            background: #0d0d14;
+        }
+
+        .map-column .dungeon-map {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .side-column {
+            grid-area: side;
+            display: grid;
+            grid-template-rows: auto auto 1fr;
+            gap: 10px;
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        #chat-section {
+            grid-area: chat;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            min-width: 0;
+            max-width: 100%;
+            overflow: hidden;
+            border: 2px solid #4a4a6a;
+            border-radius: 8px;
+            background: #10101b;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        #chat-section .panel-title {
+            flex: 0 0 auto;
+        }
+
+        #chat-section .chat-log {
+            flex: 1 1 auto;
+            min-height: 40px;
+            height: auto;
+            overflow-y: auto;
+            margin-bottom: 6px;
+        }
+
+        #chat-section .chat-form {
+            flex: 0 0 auto;
+            min-width: 0;
+        }
+
+        #chat-section .chat-form input {
+            min-width: 0;
+        }
+
+        .main-stage .game-log-section {
+            grid-area: log;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+            border: 2px solid #4a4a6a;
+            border-radius: 8px;
+            background: #10101b;
+            padding: 8px;
+        }
+
+        .main-stage .game-log-section .log-panel {
+            flex: 1 1 auto;
+            min-height: 60px;
+            max-height: none;
+            overflow-y: auto;
+            border: none;
+            padding: 6px;
+        }
+
+        .map-column.fullscreen {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background: #0a0a0a;
+            padding: 20px;
+            grid-template-rows: 1fr auto;
+        }
+
+        .map-column.fullscreen .dungeon-map {
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            font-size: 14px;
+        }
+
+        .fullscreen-toggle {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            z-index: 10;
+            padding: 4px 8px;
+            border: 1px solid #ffcc00;
+            border-radius: 4px;
+            background: #1a1a2e;
+            color: #ffcc00;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        .map-column.fullscreen .fullscreen-toggle {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+        }
+
+        #minimap-section {
+            border: 2px solid #4a4a6a;
+            border-radius: 8px;
+            background: #10101b;
+            padding: 8px;
+        }
+
+        .side-column .action-legend {
+            width: 100%;
+            align-content: start;
+            overflow-y: auto;
+        }
+
+        .dungeon-map {
+            text-align: center;
+            position: relative;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        #level-title {
+            color: #ffcc00;
+            margin: 0;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .ascii-art {
+            font-family: 'Courier New', monospace;
+            white-space: pre;
+            font-size: 10px;
+            line-height: 1;
+        }
+        
+        .party-panel {
+            background: #1a1a2e;
+            border: 3px solid #4a4a6a;
+            padding: 7px;
+        }
+        
+        .panel-title {
+            color: #ffcc00;
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 2px solid #ffcc00;
+            padding-bottom: 10px;
+        }
+        
+        .log-panel {
+            background: #0a0a0a;
+            border: 3px solid #4a4a6a;
+            padding: 15px;
+            width: 100%;
+            min-height: 128px;
+            max-height: 224px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            margin-top: 0;
+        }
+        
+        .log-entry {
+            margin-bottom: 8px;
+            padding-left: 15px;
+            border-left: 3px solid #ffcc00;
+            line-height: 1.4;
+        }
+        
+        .action-legend {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 4px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 8px;
+            border: 3px solid #4a4a6a;
+            background: #10101b;
+        }
+
+        .game-log-section {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .game-log-section .panel-title {
+            margin-bottom: 4px;
+            padding-bottom: 4px;
+            font-size: 0.85rem;
+        }
+
+        .log-panel {
+            flex: 1 1 auto;
+            min-height: 80px;
+            max-height: none;
+            overflow-y: auto;
+        }
+
+        .action-legend h2 {
+            grid-column: 1 / -1;
+            color: #ffcc00;
+            font-size: 0.95rem;
+            text-align: center;
+        }
+
+        .action-button {
+            position: relative;
+            min-height: 40px;
+            padding: 4px;
+            border: 1px solid #b7f5c2;
+            border-radius: 6px;
+            background: #e5ffe9;
+            color: #15241a;
+            font-size: 0.72rem;
+            line-height: 1.2;
+            box-shadow: none;
+        }
+
+        .action-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .action-button:disabled {
+            border-color: #555;
+            background: #777;
+            color: #333;
+            cursor: not-allowed;
+            opacity: 0.72;
+        }
+
+        .action-button:disabled::after {
+            position: absolute;
+            top: 50%;
+            left: 10%;
+            width: 80%;
+            height: 4px;
+            background: #080808;
+            content: "";
+            transform: rotate(-42deg);
+            pointer-events: none;
+        }
+
+        .action-key {
+            display: block;
+            margin-top: 1px;
+            color: #536353;
+            font-size: 0.58rem;
+            font-weight: normal;
+        }
+
+        .action-icon {
+            font-size: 0.85rem;
+            font-weight: 900;
+        }
+
+        .icon-move { color: #00838f; }
+        .icon-attack { color: #d50000; }
+        .icon-rest { color: #2e7d32; }
+        .icon-guard { color: #ef6c00; }
+        .icon-end { color: #1565c0; }
+
+        .action-button:disabled .action-icon { color: #333; }
+        .action-button:disabled .action-key { color: #222; }
+        .action-button.guard-active {
+            border-color: #ffe082;
+            background: #fff3c4;
+        }
+
+        .ability-button {
+            background: #e8e0ff;
+            border-color: #b9a8f5;
+            color: #241a3a;
+        }
+
+        .ability-meta {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: #b9b3a3;
+            font-size: 0.68rem;
+            padding-top: 2px;
+        }
+
+        .dice-panel {
+            border: 2px solid #4a4a6a;
+            border-radius: 8px;
+            background: #10101b;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .dice-controls {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .dice-controls select,
+        .dice-controls input {
+            padding: 4px;
+            border: 1px solid #65657b;
+            border-radius: 4px;
+            background: #0a0a0a;
+            color: #fff;
+            font-size: 0.72rem;
+            min-width: 0;
+        }
+
+        .dice-controls input { width: 44px; }
+
+        .dice-controls button {
+            padding: 4px 8px;
+            border: 1px solid #d4a73a;
+            border-radius: 4px;
+            background: #2a2410;
+            color: #ffcc00;
+            font-size: 0.72rem;
+            cursor: pointer;
+        }
+
+        .dice-controls button:hover { background: #d4a73a; color: #1a1a00; }
+
+        .dice-total {
+            margin-left: auto;
+            color: #ffcc00;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .dice-log {
+            flex: 1 1 auto;
+            min-height: 50px;
+            max-height: 110px;
+            overflow-y: auto;
+            background: #0a0a0a;
+            border: 1px solid #2a2a3a;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 0.66rem;
+            line-height: 1.5;
+            color: #d6d0bf;
+        }
+
+        .dice-log .dice-crit { color: #66ff66; }
+        .dice-log .dice-fail { color: #ff6666; }
+
+        #readme-dialog {
+            width: min(860px, 92vw);
+            max-height: 86vh;
+            padding: 16px 20px;
+            border: 3px solid #ffcc00;
+            border-radius: 10px;
+            background: #12121a;
+            color: #d6d0bf;
+        }
+
+        #readme-dialog::backdrop { background: rgba(0, 0, 0, 0.7); }
+
+        #readme-dialog h2 {
+            color: #ffcc00;
+            margin: 0 0 10px;
+            font-size: 1.05rem;
+        }
+
+        .readme-body {
+            overflow-y: auto;
+            max-height: calc(86vh - 110px);
+            padding-right: 8px;
+            font-size: 0.8rem;
+            line-height: 1.55;
+        }
+
+        .readme-body h3 {
+            color: #ffcc00;
+            margin: 14px 0 6px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #4a4a6a;
+            padding-bottom: 3px;
+        }
+
+        .readme-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 6px 0;
+            font-size: 0.74rem;
+        }
+
+        .readme-body th, .readme-body td {
+            border: 1px solid #3a3a4a;
+            padding: 4px 6px;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .readme-body th { background: #1d1d2c; color: #ffcc00; }
+        .readme-body tr:nth-child(even) td { background: #16161f; }
+        .readme-body code {
+            background: #0a0a10;
+            border: 1px solid #3a3a4a;
+            border-radius: 3px;
+            padding: 0 4px;
+            color: #76ff03;
+        }
+        .readme-body ul, .readme-body ol { margin: 4px 0 8px 20px; }
+        .readme-body li { margin-bottom: 3px; }
+        .readme-body p { margin: 4px 0 8px; }
+        .readme-body b { color: #f1e6d0; }
+
+        .readme-close {
+            float: right;
+            padding: 4px 10px;
+            border: 1px solid #65657b;
+            border-radius: 5px;
+            background: #2a2a3a;
+            color: #d6d0bf;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+
+        .readme-close:hover { background: #ffcc00; color: #1a1a00; }
+
+        .readme-print {
+            margin-right: 8px;
+            border-color: #d4a73a;
+            color: #ffcc00;
+        }
+
+        /* Print only the game guide: hide everything else, unclip the dialog body */
+        @media print {
+            body.printing-readme > *:not(#readme-dialog) { display: none !important; }
+
+            body.printing-readme #readme-dialog {
+                display: block;
+                position: static;
+                width: auto;
+                max-height: none;
+                border: none;
+                padding: 0;
+                background: #fff;
+                color: #000;
+            }
+
+            body.printing-readme #readme-dialog::backdrop { display: none; }
+            body.printing-readme .readme-close { display: none !important; }
+
+            body.printing-readme .readme-body {
+                overflow: visible;
+                max-height: none;
+                padding-right: 0;
+                font-size: 11pt;
+                line-height: 1.5;
+                color: #000;
+            }
+
+            body.printing-readme #readme-dialog h2,
+            body.printing-readme .readme-body h3 {
+                color: #000;
+                border-color: #999;
+            }
+
+            body.printing-readme .readme-body th {
+                background: #eee;
+                color: #000;
+            }
+
+            body.printing-readme .readme-body tr:nth-child(even) td { background: #f7f7f7; }
+
+            body.printing-readme .readme-body th,
+            body.printing-readme .readme-body td { border-color: #999; }
+
+            body.printing-readme .readme-body code {
+                background: #f0f0f0;
+                border-color: #bbb;
+                color: #000;
+            }
+
+            body.printing-readme .readme-body b { color: #000; }
+            body.printing-readme .readme-body h3 { page-break-after: avoid; }
+            body.printing-readme .readme-body table { page-break-inside: avoid; }
+        }
+        
+        button {
+            background: linear-gradient(to bottom, #ffcc00, #ff9800);
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1.1rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+        }
+        
+        .dungeon-map {
+            white-space: normal;
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #e0d6b8;
+            padding: 2px;
+            border-radius: 5px;
+            margin: 0 auto 2px;
+            overflow: auto;
+            line-height: 1;
+            overscroll-behavior: contain;
+            scrollbar-color: #786a49 #111;
+            scrollbar-width: thin;
+        }
+
+        .dungeon-map::-webkit-scrollbar {
+            width: 3px;
+            height: 3px;
+        }
+
+        .dungeon-map::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        .dungeon-map::-webkit-scrollbar-thumb {
+            background: #786a49;
+            border-radius: 3px;
+        }
+
+        .dungeon-map-content {
+            width: max-content;
+            min-width: max-content;
+            white-space: pre;
+        }
+
+        .map-row {
+            display: block;
+            height: 1em;
+            white-space: pre;
+        }
+
+        .map-cell {
+            display: inline-block;
+            width: 1ch;
+            text-align: center;
+        }
+
+        .map-cell.monster-cell {
+            position: relative;
+            z-index: 2;
+        }
+
+        .monster-health-indicator {
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            z-index: 5;
+            display: flex;
+            width: 10ch;
+            flex-direction: column;
+            align-items: center;
+            padding: 1px 2px;
+            border: 1px solid #8d3434;
+            border-radius: 3px;
+            background: #120707;
+            color: #ffe6e6;
+            font: 9px/1.1 'Courier New', monospace;
+            transform: translateX(-50%);
+            pointer-events: none;
+        }
+
+        .monster-health-label { white-space: nowrap; }
+
+        .monster-health-track {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background: #493333;
+        }
+
+        .monster-health-fill {
+            display: block;
+            height: 100%;
+            background: #ef5350;
+        }
+
+        .map-cell.active-player {
+            animation: active-player-blink 0.9s steps(2, start) infinite;
+        }
+
+        @keyframes active-player-blink {
+            to { opacity: 0.2; }
+        }
+
+        .character-sheets {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: 0;
+            max-height: 100%;
+            overflow: hidden;
+            padding: 10px 0 0;
+        }
+
+        .sheet-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: stretch;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 6px;
+        }
+
+        .sheet-grid .character-sheet {
+            flex: 1 1 0;
+            min-width: 180px;
+            max-width: 220px;
+        }
+
+        .party-setup {
+            width: 100%;
+            padding: 12px 16px;
+            border-bottom: 2px solid #4a4a6a;
+            background: linear-gradient(180deg, #1a1a28 0%, #141421 100%);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .party-setup h3 {
+            width: 100%;
+            text-align: center;
+            color: #ffcc00;
+            margin: 0 0 6px;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .party-setup label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: #d6d0bf;
+            font-size: 0.72rem;
+            min-width: 110px;
+        }
+
+        .party-setup input,
+        .party-setup select {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #65657b;
+            border-radius: 4px;
+            background: #0a0a0a;
+            color: #fff;
+            margin-top: 2px;
+        }
+
+        .party-setup .sheet-party-actions,
+        .party-setup .network-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 130px;
+        }
+
+        .party-setup button {
+            width: 100%;
+            padding: 6px 10px;
+            margin: 0;
+        }
+
+        #inventory-section {
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #4a4a6a;
+        }
+
+        .inventory-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            margin-top: 6px;
+            padding: 6px 8px;
+            background: #1a1a24;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            color: #e0d6b8;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .inventory-item:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .party-setup button,
+        .sheet-party-actions button {
+            width: 100%;
+            margin-top: 8px;
+            padding: 6px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+        }
+
+        .sheet-party-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 0;
+        }
+
+        .sheet-grid {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: stretch;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 6px;
+            max-height: none;
+        }
+
+        .sheet-grid .character-sheet {
+            flex: 1 1 0;
+            min-width: 165px;
+            max-width: 210px;
+        }
+
+        .character-sheet {
+            padding: 8px;
+            border: 2px solid #4a4a6a;
+            border-left: 5px solid var(--member-color, #ffcc00);
+            border-radius: 8px;
+            background: #141421;
+        }
+
+        .character-sheet.active {
+            border-color: #ffe14d;
+            outline: 3px solid #ffe14d;
+            outline-offset: 1px;
+            background: #1a1a28;
+        }
+
+        .character-sheet h3 {
+            margin-bottom: 6px;
+            color: var(--member-color, #ffcc00);
+        }
+
+        .sheet-name-row {
+            margin-bottom: 4px;
+        }
+
+        .sheet-name-input {
+            width: 100%;
+            padding: 4px 6px;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            background: #0a0a10;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-align: center;
+            box-sizing: border-box;
+        }
+
+        .sheet-name-input:disabled {
+            border-color: transparent;
+            background: transparent;
+            opacity: 1;
+        }
+
+        .sheet-name-input:focus {
+            outline: 2px solid #ffcc00;
+        }
+
+        .sheet-ready-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            color: #b9b3a3;
+            font-size: 0.68rem;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .sheet-ready-label.is-ready {
+            color: #76ff03;
+            font-weight: bold;
+        }
+
+        .sheet-ready-box {
+            width: 14px;
+            height: 14px;
+            accent-color: #76ff03;
+            cursor: pointer;
+        }
+
+        .sheet-heading-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .sheet-heading-row h3 {
+            margin: 0;
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sheet-title {
+            display: flex;
+            align-items: center;
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .sheet-level-badge {
+            flex: 0 0 auto;
+            padding: 2px 8px;
+            border: 1px solid #ffcc00;
+            border-radius: 10px;
+            background: #2a2410;
+            color: #ffcc00;
+            font-size: 0.72rem;
+            font-weight: bold;
+            white-space: nowrap;
+        }
+
+        .sheet-sub-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+
+        .sheet-sub-row .sheet-class-points {
+            flex: 1 1 auto;
+        }
+
+        .sheet-active-tag {
+            flex: 0 0 auto;
+            align-self: flex-end;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #ffe14d;
+            color: #1a1a00;
+            font-size: 0.65rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .sheet-remove-row {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #2a2a3a;
+            text-align: center;
+        }
+
+        .sheet-remove-btn {
+            width: 70%;
+            margin: 0 auto;
+            padding: 4px 0;
+            border: 1px solid #f44336;
+            border-radius: 4px;
+            background: #3a1010;
+            color: #f44336;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        .sheet-remove-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .sheet-remove-btn:hover:not(:disabled) {
+            background: #f44336;
+            color: #fff;
+        }
+
+        .sheet-class-points {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .sheet-class-points select {
+            flex: 1 1 auto;
+        }
+
+        .sheet-class-points label,
+        .attribute-allocation label {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            color: #d6d0bf;
+            font-size: 0.7rem;
+        }
+
+        .sheet-class-points select,
+        .attribute-allocation input {
+            min-width: 0;
+            width: 100%;
+            padding: 4px;
+            border: 1px solid #65657b;
+            border-radius: 4px;
+            background: #0a0a0a;
+            color: #fff;
+        }
+
+        .attribute-allocation input.attribute-point-control {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .attribute-allocation input.attribute-point-control:focus {
+            outline: 2px solid #ffcc00;
+        }
+
+        .remaining-points {
+            min-width: 36px;
+            padding-bottom: 4px;
+            color: #ffcc00;
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .sheet-stats-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 3px;
+            margin-top: 4px;
+        }
+
+        .sheet-stat {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+            padding: 2px 4px;
+            border-radius: 3px;
+            background: #0a0a10;
+            font-size: 0.66rem;
+        }
+
+        .sheet-stat-label { color: #b9b3a3; }
+        .sheet-stat-value { color: #fff; font-weight: bold; }
+
+        .attribute-allocation {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .attribute-allocation input:disabled,
+        .sheet-class-points select:disabled {
+            opacity: 0.62;
+        }
+
+        .sheet-status {
+            margin-top: 6px;
+            overflow-wrap: break-word;
+            color: #ffcc00;
+            font-size: 0.72rem;
+        }
+
+        .sheet-xp {
+            margin-top: 6px;
+            color: #ffcc00;
+        }
+
+        dialog {
+            width: min(420px, calc(100% - 32px));
+            margin: auto;
+            padding: 22px;
+            border: 2px solid #ffcc00;
+            border-radius: 10px;
+            background: #1a1a2e;
+            color: #e0d6b8;
+        }
+
+        dialog::backdrop {
+            background: rgba(0, 0, 0, 0.75);
+        }
+
+        .escape-menu-actions {
+            display: grid;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .escape-menu-actions button {
+            border-radius: 6px;
+        }
+
+        .escape-menu-actions button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .save-status {
+            min-height: 1.2em;
+            margin-top: 10px;
+            color: #d6d0bf;
+            font-size: 0.8rem;
+        }
+
+        .layout-help {
+            margin-top: 6px;
+            color: #d6d0bf;
+            font-size: 0.8rem;
+            line-height: 1.35;
+        }
+
+        .layout-edit-item {
+            position: relative;
+            transform: translate3d(var(--layout-x, 0px), var(--layout-y, 0px), 0);
+        }
+
+        .layout-edit-item.layout-edit-active {
+            z-index: 10;
+            outline: 2px dashed #ffcc00;
+            outline-offset: 2px;
+            overflow: auto;
+            resize: both;
+            min-width: 48px;
+            min-height: 32px;
+        }
+
+        .layout-drag-handle {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            z-index: 20;
+            padding: 3px 6px;
+            border: 1px solid #ffcc00;
+            border-radius: 4px;
+            background: #27200b;
+            color: #fff;
+            font: bold 11px/1.2 'Courier New', monospace;
+            cursor: move;
+            touch-action: none;
+            user-select: none;
+        }
+
+        .layout-drag-handle:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .legend {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 3px 8px;
+            flex-wrap: wrap;
+            width: 100%;
+            margin-top: 0;
+            padding: 5px 7px;
+            border: 1px solid #4a4a6a;
+            border-radius: 5px;
+            background: #15151e;
+        }
+
+        .legend-title {
+            width: 100%;
+            color: #bfc7d5;
+            font-size: 0.65rem;
+            font-weight: bold;
+            letter-spacing: 0.09em;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #d7d7df;
+            font-size: 0.68rem;
+        }
+        
+        .legend-symbol {
+            display: inline-flex;
+            width: 1.4em;
+            height: 1.4em;
+            align-items: center;
+            justify-content: center;
+            border-radius: 3px;
+            font-size: 0.95rem;
+            font-weight: bold;
+        }
+
+        .legend-wall { color: #ffffff; }
+        .legend-start { color: #00e5ff; }
+        .legend-door { color: #d4a373; }
+        .legend-monster { color: #ff5252; }
+        .legend-treasure { color: #ffd740; }
+        .legend-symbol.legend-power { color: #ffeb3b; }
+        .legend-trap { color: #ff9100; }
+        .legend-chasm { color: #555; }
+        .legend-water { color: #4a90a4; }
+        .legend-shrine { color: #69f0ae; }
+        .legend-exit { color: #69f0ae; }
+
+        .minimap {
+            width: 100%;
+            height: 120px;
+            background: #0a0a0a;
+            border: 2px solid #4a4a6a;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .minimap canvas {
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .chat-log {
+            overflow-y: auto;
+            background: #0a0a0a;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            overflow-wrap: break-word;
+        }
+
+        .chat-entry {
+            margin-bottom: 4px;
+        }
+
+        .chat-time { color: #888; }
+
+        .chat-sender {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        .chat-form {
+            display: flex;
+            gap: 6px;
+        }
+
+        .chat-form input {
+            flex: 1;
+            padding: 6px;
+            background: #0a0a0a;
+            border: 1px solid #65657b;
+            border-radius: 4px;
+            color: #fff;
+        }
+
+        .chat-form button {
+            padding: 6px 10px;
+            background: #2196f3;
+            border: none;
+            border-radius: 4px;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .turn-order-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 6px 4px;
+            margin-bottom: 6px;
+            background: #0f0f15;
+            border: 1px solid #4a4a6a;
+            border-radius: 5px;
+            scrollbar-width: thin;
+        }
+
+        .turn-order-bar::-webkit-scrollbar { height: 6px; }
+        .turn-order-bar::-webkit-scrollbar-thumb { background: #4a4a6a; border-radius: 3px; }
+
+        .turn-order-item {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            border: 1px solid #4a4a6a;
+            border-radius: 4px;
+            background: #1a1a24;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+
+        .turn-order-item.active {
+            opacity: 1;
+            background: #262636;
+            box-shadow: 0 0 6px currentColor;
+            font-weight: bold;
+        }
+
+        .turn-avatar {
+            font-size: 1rem;
+        }
+
+        .turn-name {
+            white-space: nowrap;
+        }
+
+        .hp-bar {
+            position: relative;
+            height: 12px;
+            background: #222;
+            border: 1px solid #4a4a6a;
+            border-radius: 3px;
+            margin: 4px 0 6px;
+            overflow: hidden;
+        }
+
+        .hp-fill {
+            height: 100%;
+            transition: width 0.2s ease, background 0.2s ease;
+        }
+
+        .hp-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            text-shadow: 0 0 2px #000;
+            pointer-events: none;
+        }
+
+        .status-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-bottom: 4px;
+        }
+
+        .status-badge {
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-size: 0.6rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-poison { background: #2e4a1a; color: #76ff03; }
+        .status-bless { background: #4a3a00; color: #ffd740; }
+        .status-haste { background: #1a2a4a; color: #69f0ae; }
+        .status-slow { background: #4a1a00; color: #ff9100; }
+        .status-stun { background: #4a1a1a; color: #ff5252; }
+
+        .sheet-avatar {
+            font-size: 1.2rem;
+            margin-right: 5px;
+        }
+
+        .down-tag { color: #ef5350; font-weight: bold; }
+
+        .reachable-tile {
+            outline: 1px dashed rgba(255, 204, 0, 0.45);
+            outline-offset: -1px;
+            background: rgba(255, 204, 0, 0.08);
+        }
+
+        .floating-text {
+            position: absolute;
+            pointer-events: none;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-shadow: 0 0 2px #000;
+            z-index: 10;
+            transition: opacity 0.1s linear;
+        }
+
+        .floating-text-layer {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .audio-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #4a4a6a;
+            font-size: 0.85rem;
+        }
+
+        .audio-controls label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mobile-controls {
+            display: none;
+            position: fixed;
+            bottom: 12px;
+            left: 12px;
+            right: 12px;
+            z-index: 50;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 12px;
+            padding: 10px;
+            background: rgba(10, 10, 15, 0.92);
+            border: 2px solid #4a4a6a;
+            border-radius: 12px;
+            backdrop-filter: blur(4px);
+        }
+
+        .dpad {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dpad-middle {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .mobile-controls button {
+            width: 64px;
+            height: 64px;
+            font-size: 1.5rem;
+            padding: 0;
+            background: #2a2a3a;
+            border: 1px solid #4a4a6a;
+            border-radius: 10px;
+            color: #e0d6b8;
+        }
+
+        .mobile-controls button:disabled { opacity: 0.4; }
+
+        .mobile-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-controls {
+                display: flex;
+            }
+
+            .action-legend {
+                display: none;
+            }
+
+            .dungeon-content {
+                grid-template-columns: 1fr;
+            }
+
+            .game-container {
+                padding-bottom: 110px;
+            }
+        }
+
+        .error-boundary {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(10, 10, 10, 0.95);
+            z-index: 1000;
+        }
+
+        .error-box {
+            max-width: 400px;
+            padding: 24px;
+            background: #141421;
+            border: 2px solid #f44336;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .error-box h2 {
+            color: #f44336;
+            margin-bottom: 10px;
+        }
+
+        .error-box p {
+            color: #b9b3a3;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+        }
+
+        .error-box button {
+            padding: 10px 20px;
+            background: #f44336;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .player-legend-markers {
+            display: inline-flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .player-legend-marker {
+            display: inline-flex;
+            min-width: 1.5em;
+            height: 1.5em;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid currentColor;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .network-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .network-section button {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            border-radius: 5px;
+        }
+
+        .network-status {
+            color: #b9b3a3;
+            font-size: 0.75rem;
+        }
+        
+        @media (max-width: 1100px) {
+            .dungeon-content {
+                grid-template-columns: minmax(170px, 190px) minmax(0, 1fr) minmax(230px, 280px);
+            }
+        }
+
+        @media (max-width: 900px) {
+            .dungeon-content {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .top-bar {
+                grid-template-columns: 1fr;
+            }
+
+            .main-stage {
+                grid-template-columns: 1fr;
+                max-height: none;
+                grid-template-areas:
+                    "map"
+                    "side"
+                    "chat"
+                    "log";
+                grid-template-rows: auto auto auto auto;
+            }
+
+            .action-legend {
+                width: 100%;
+            }
+
+            .main-stage .game-log-section .log-panel {
+                max-height: 200px;
+            }
+
+            .party-setup {
+                position: static;
+            }
+
+            .sheet-grid .character-sheet {
+                min-width: 150px;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .sheet-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <p class="game-help">Press Escape to pause, resume, or jump to the character sheets.</p>
+        <section class="party-setup" aria-label="Party setup">
+            <h3>✦ PARTY SETUP ✦</h3>
+            <label for="gm-starting-points">GM starting points per player
+                <input id="gm-starting-points" type="number" min="0" max="544" step="1" placeholder="Enter points">
+            </label>
+            <label for="difficulty-select">Difficulty
+                <select id="difficulty-select">
+                    <option value="easy">Easy</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard (permadeath)</option>
+                    <option value="nightmare">Nightmare (permadeath)</option>
+                </select>
+            </label>
+            <label for="formation-select">Formation
+                <select id="formation-select">
+                    <option value="cluster" selected>Cluster</option>
+                    <option value="line">Line</option>
+                    <option value="wedge">Wedge</option>
+                    <option value="spread">Spread</option>
+                </select>
+            </label>
+            <label for="add-member-class">New member class
+                <select id="add-member-class"></select>
+            </label>
+            <div class="sheet-party-actions">
+                <button id="add-member-btn" style="background:#4caf50;">+ Add Player</button>
+                <button id="remove-member-btn" style="background:#f44336;" disabled>– Remove Active</button>
+            </div>
+            <div class="network-section">
+                <button id="network-button" type="button" style="background:#2196f3; color:#fff;">Network</button>
+                <span id="network-status-right" class="network-status">Offline</span>
+            </div>
+        </section>
+        <div class="dungeon-view">
+            <div class="top-bar">
+                <section class="legend" aria-label="Dungeon map legend">
+                    <span class="legend-title">MAP KEY</span>
+                    <div class="legend-item">
+                        <span class="legend-label">Players</span>
+                        <span id="player-legend-markers" class="player-legend-markers"></span>
+                    </div>
+                    <div class="legend-item"><span class="legend-symbol legend-wall">#</span> Wall</div>
+                    <div class="legend-item"><span class="legend-symbol legend-start">S</span> Start</div>
+                    <div class="legend-item"><span class="legend-symbol legend-door">+</span> Door</div>
+                    <div class="legend-item"><span class="legend-symbol legend-monster">M</span> Monster</div>
+                    <div class="legend-item"><span class="legend-symbol legend-treasure">$</span> Coin</div>
+                    <div class="legend-item"><span class="legend-symbol legend-treasure">%</span> Gem</div>
+                    <div class="legend-item"><span class="legend-symbol legend-treasure">&amp;</span> Relic</div>
+                    <div class="legend-item"><span class="legend-symbol legend-power">P</span> Power Item</div>
+                    <div class="legend-item"><span class="legend-symbol legend-trap">^</span> Trap</div>
+                    <div class="legend-item"><span class="legend-symbol legend-chasm">≡</span> Chasm</div>
+                    <div class="legend-item"><span class="legend-symbol legend-water">~</span> Water</div>
+                    <div class="legend-item"><span class="legend-symbol legend-shrine">Θ</span> Shrine</div>
+                    <div class="legend-item"><span class="legend-symbol legend-exit">&gt;</span> Exit</div>
+                </section>
+                <div class="center-header">
+                    <h1 class="game-brand">PixelBear's Ascii Dungeon Crawler</h1>
+                    <div id="top-party-row" class="top-party-row"></div>
+                    <h3 id="level-title">DUNGEON LEVEL 1</h3>
+                </div>
+                <section class="party-load" aria-label="Party loadout">
+                    <h2 class="panel-title" style="font-size:0.85rem; padding-bottom:4px; margin-bottom:6px;">PARTY LOAD</h2>
+                    <div id="inventory-panel">No items.</div>
+                    <div id="network-status" class="network-status" style="margin-top:8px;">Offline</div>
+                </section>
+            </div>
+            <div class="main-stage">
+                <section class="map-column" id="map-column" aria-label="Dungeon map">
+                    <button id="fullscreen-toggle" class="fullscreen-toggle" type="button" title="Toggle fullscreen map">⛶</button>
+                    <div id="dungeon-map" class="dungeon-map">
+                        <div id="dungeon-map-content" class="dungeon-map-content"></div>
+                    </div>
+                    <div id="floating-text-layer" class="floating-text-layer"></div>
+                </section>
+                <section class="side-column" aria-label="Minimap and player options">
+                    <section id="minimap-section" aria-label="Minimap">
+                        <h2 class="panel-title" style="font-size:0.85rem;">MINIMAP</h2>
+                        <div id="minimap" class="minimap"></div>
+                    </section>
+                    <section class="action-legend" aria-label="Player actions">
+                        <h2>PLAYER OPTIONS</h2>
+                        <button id="move-up" class="action-button" aria-label="Move up"><span class="action-icon icon-move">↑</span> Up<span class="action-key">↑ / W</span></button>
+                        <button id="move-left" class="action-button" aria-label="Move left"><span class="action-icon icon-move">←</span> Left<span class="action-key">← / A</span></button>
+                        <button id="move-down" class="action-button" aria-label="Move down"><span class="action-icon icon-move">↓</span> Down<span class="action-key">↓ / S</span></button>
+                        <button id="move-right" class="action-button" aria-label="Move right"><span class="action-icon icon-move">→</span> Right<span class="action-key">→ / D</span></button>
+                        <button id="attack-btn" class="action-button" aria-label="Attack"><span class="action-icon icon-attack">⚔</span> Attack<span class="action-key">F</span></button>
+                        <button id="rest-btn" class="action-button" aria-label="Rest and heal"><span class="action-icon icon-rest">✚</span> Rest<span class="action-key">R</span></button>
+                        <button id="guard-btn" class="action-button" aria-label="Stand guard"><span class="action-icon icon-guard">▣</span> Guard<span class="action-key">G</span></button>
+                        <button id="end-turn-btn" class="action-button" aria-label="End turn"><span class="action-icon icon-end">≫</span> End Turn<span class="action-key">E</span></button>
+                        <button id="ability-attack-btn" class="action-button ability-button" aria-label="Class attack"><span class="action-icon icon-attack">🗡</span> <span id="ability-attack-name">Strike</span><span class="action-key">1</span></button>
+                        <button id="ability-spell-btn" class="action-button ability-button" aria-label="Cast spell"><span class="action-icon icon-spell">✨</span> <span id="ability-spell-name">Spell</span><span class="action-key">2</span></button>
+                        <button id="ability-power-btn" class="action-button ability-button" aria-label="Power attack"><span class="action-icon icon-power">💥</span> <span id="ability-power-name">Power</span><span class="action-key">3</span></button>
+                        <div id="ability-meta" class="ability-meta">Charges: – | Power: ready</div>
+                    </section>
+                    <section id="dice-panel" class="dice-panel" aria-label="Dice roller">
+                        <h2 class="panel-title" style="font-size:0.85rem;">DICE ROLLER</h2>
+                        <div class="dice-controls">
+                            <select id="dice-count"></select>
+                            <select id="dice-type"><option>d4</option><option>d6</option><option>d8</option><option>d10</option><option>d12</option><option selected>d20</option><option>d%</option></select>
+                            <input id="dice-mod" type="number" value="0" step="1" title="Modifier" aria-label="Modifier">
+                            <button id="dice-roll-btn" type="button">🎲 Roll</button>
+                        </div>
+                        <div class="dice-controls">
+                            <button id="dice-adv-btn" type="button" title="Advantage: roll 2d20, keep highest">Adv</button>
+                            <button id="dice-dis-btn" type="button" title="Disadvantage: roll 2d20, keep lowest">Dis</button>
+                            <span id="dice-total" class="dice-total">–</span>
+                        </div>
+                        <div id="dice-log" class="dice-log" aria-live="polite"></div>
+                    </section>
+                </section>
+                <section id="chat-section" aria-label="Chat">
+                    <h2 class="panel-title" style="font-size:0.85rem;">PARTY CHAT</h2>
+                    <div id="chat-log" class="chat-log"></div>
+                    <form id="chat-form" class="chat-form">
+                        <input id="chat-input" type="text" placeholder="Send a message..." maxlength="200" autocomplete="off">
+                        <button type="submit">Send</button>
+                    </form>
+                </section>
+                <section class="game-log-section" aria-label="Game events">
+                    <h2 class="panel-title" style="font-size:0.85rem;">ADVENTURE LOG</h2>
+                    <div id="game-log" class="log-panel"></div>
+                </section>
+            </div>
+            <div id="turn-order-bar" class="turn-order-bar" style="display:none;"></div>
+            <div id="mobile-controls" class="mobile-controls" aria-label="Mobile controls">
+                <div class="dpad">
+                    <button id="mobile-up" aria-label="Move up">▲</button>
+                    <div class="dpad-middle">
+                        <button id="mobile-left" aria-label="Move left">◀</button>
+                        <button id="mobile-action" aria-label="Action/Attack">⚔</button>
+                        <button id="mobile-right" aria-label="Move right">▶</button>
+                    </div>
+                    <button id="mobile-down" aria-label="Move down">▼</button>
+                </div>
+                <div class="mobile-actions">
+                    <button id="mobile-rest" aria-label="Rest">✚</button>
+                    <button id="mobile-guard" aria-label="Guard">▣</button>
+                    <button id="mobile-end" aria-label="End turn">≫</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="character-sheets" class="character-sheets">
+        <h2 class="panel-title" style="font-size:0.95rem; padding-bottom:6px; margin-bottom:8px;">PARTY SHEETS</h2>
+        <div id="character-sheet-list" class="sheet-grid"></div>
+    </section>
+
+    <section id="error-boundary" class="error-boundary" style="display:none;">
+        <div class="error-box">
+            <h2>Something went wrong</h2>
+            <p id="error-message">An unexpected error occurred.</p>
+            <button id="reset-from-error">Reset Game</button>
+        </div>
+    </section>
+
+    <dialog id="escape-menu" aria-labelledby="escape-menu-title">
+        <h2 id="escape-menu-title">PAUSED</h2>
+        <div class="escape-menu-actions">
+            <button id="resume-button">Resume Game</button>
+            <button id="open-readme-button">📖 Game Guide (README)</button>
+            <button id="open-sheets-button">Character Sheets</button>
+            <button id="toggle-layout-edit-button" aria-pressed="false">Enable Layout Editing</button>
+            <button id="reset-layout-button">Restore Default Layout</button>
+            <label for="save-slot-select" style="display:flex; flex-direction:column; gap:4px; font-size:0.8rem; color:#d6d0bf;">
+                Save slot
+                <select id="save-slot-select" style="padding:6px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">
+                    <option value="Auto" selected>Auto</option>
+                </select>
+            </label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
+                <button id="save-game-button">Save</button>
+                <button id="load-game-button">Load</button>
+                <button id="delete-save-slot-button" style="background:#ef5350; color:#fff;">Delete</button>
+            </div>
+            <button id="reset-game-button" style="background:linear-gradient(to bottom, #ef5350, #c62828); color:#fff;">Reset Game</button>
+        </div>
+        <div class="audio-controls">
+            <label>
+                <input id="mute-toggle" type="checkbox"> Mute
+            </label>
+            <label>
+                Volume
+                <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="0.5">
+            </label>
+            <span id="volume-value">50%</span>
+        </div>
+        <p id="layout-status" class="layout-help" role="status" aria-live="polite">
+            Layout editing is off. Turn it on to drag or resize game panels.
+        </p>
+        <p id="save-status" class="save-status" role="status" aria-live="polite"></p>
+    </dialog>
+
+    <dialog id="readme-dialog" aria-labelledby="readme-dialog-title">
+        <button id="readme-close-top" type="button" class="readme-close" aria-label="Close guide">✕ Close</button>
+        <button id="readme-print-top" type="button" class="readme-close readme-print" aria-label="Print guide">🖨 Print</button>
+        <h2 id="readme-dialog-title">📖 PixelBear's Dungeon Crawler — Game Guide</h2>
+        <div class="readme-body">
+
+        <h3>🎯 Goal</h3>
+        <p>Guide a party of up to 6 adventurers through an endless dungeon. Explore, fight monsters, collect treasure, and take the stairs (<code>&gt;</code>) ever deeper. Every 5th floor is a boss floor. The game ends when the whole party falls.</p>
+
+        <h3>🚀 Quick start</h3>
+        <ol>
+            <li>Type each player's <b>name</b> at the top of their sheet and pick a <b>class</b> from the dropdown.</li>
+            <li>The GM may enter <b>starting points per player</b> in Party Setup; spend them by left-clicking stats on the sheet (right-click reclaims).</li>
+            <li>Pick <b>Difficulty</b> and <b>Formation</b> in Party Setup (locked after the first move).</li>
+            <li>Tick each player's <b>Ready</b> box to lock them in. When all are ready, move to begin!</li>
+        </ol>
+
+        <h3>⌨ Controls</h3>
+        <table>
+            <tr><th>Key</th><th>Action</th></tr>
+            <tr><td>W A S D / Arrows</td><td>Move (10 spaces per turn, up to 2 unused carry over)</td></tr>
+            <tr><td>F</td><td>Basic attack — nearest monster in range</td></tr>
+            <tr><td>1</td><td>Class attack (see Combat below)</td></tr>
+            <tr><td>2</td><td>Class spell — costs a spell charge</td></tr>
+            <tr><td>3</td><td>Class power attack — has a cooldown</td></tr>
+            <tr><td>R</td><td>Rest: heal 30% max HP and restore spell charges (ends turn)</td></tr>
+            <tr><td>G</td><td>Guard: react to monsters within 2 spaces at turn end (needs full HP, 2 moves). A Cleric with 3+ moves standing next to a fallen ally revives them instead</td></tr>
+            <tr><td>E</td><td>End turn (monsters then act)</td></tr>
+            <tr><td>Esc</td><td>This pause menu</td></tr>
+        </table>
+
+        <h3>🗺 Map key</h3>
+        <table>
+            <tr><th>Symbol</th><th>Meaning</th></tr>
+            <tr><td><code>@ 1 2 3 4 5</code></td><td>Party members, in their player colors. The blinking one is the active player</td></tr>
+            <tr><td><code>#</code> / <code>▓</code></td><td>Wall — impassable (style varies by biome)</td></tr>
+            <tr><td><code>.</code> / <code>·</code></td><td>Floor — walkable</td></tr>
+            <tr><td><code>S</code></td><td>Start — where the party entered this floor</td></tr>
+            <tr><td><code>+</code></td><td>Door — walk into it to open/close; some are locked and need an Iron Key 🗝</td></tr>
+            <tr><td><code>M</code></td><td>Monster — see Bestiary below; hover for a tooltip with HP</td></tr>
+            <tr><td><code>$</code></td><td>Coin — small treasure</td></tr>
+            <tr><td><code>%</code></td><td>Gem — medium treasure</td></tr>
+            <tr><td><code>&amp;</code></td><td>Relic — large treasure</td></tr>
+            <tr><td><code>P</code></td><td>Power Item — +5 basic damage, +2 ability damage, +60 XP, permanent</td></tr>
+            <tr><td><code>^</code></td><td>Trap — steps deal 2–6 damage; visible once discovered</td></tr>
+            <tr><td><code>≡</code></td><td>Chasm — impassable gap</td></tr>
+            <tr><td><code>~</code></td><td>Water — slows movement through it</td></tr>
+            <tr><td><code>Θ</code></td><td>Shrine — stand on it to revive one fallen ally at 50% HP (one use per shrine)</td></tr>
+            <tr><td><code>&gt;</code></td><td>Exit — stairs down to the next dungeon level</td></tr>
+            <tr><td>🧪 📜 ⚡ 🍃 🗝</td><td>Floor items — walk over to pick up, use from the Party Load panel</td></tr>
+        </table>
+
+        <h3>🧙 Character classes</h3>
+        <table>
+            <tr><th>Class</th><th>HP</th><th>AC</th><th>Role</th><th>Key stat</th></tr>
+            <tr><td>⚔ <b>Fighter</b> (Human)</td><td>15</td><td>14</td><td>Front-line tank; melee AoE power</td><td>Strength</td></tr>
+            <tr><td>🏹 <b>Archer</b> (Elf)</td><td>13</td><td>13</td><td>Long-range sniper (range 5); multi-target volleys</td><td>Dexterity</td></tr>
+            <tr><td>🗡 <b>Rogue</b> (Elf)</td><td>12</td><td>12</td><td>Burst melee damage; poison; crits</td><td>Dexterity</td></tr>
+            <tr><td>🔮 <b>Wizard</b> (Gnome)</td><td>10</td><td>10</td><td>Ranged nuker; splash damage</td><td>Intelligence</td></tr>
+            <tr><td>✚ <b>Cleric</b> (Dwarf)</td><td>14</td><td>16</td><td>Healer and reviver; radiant smite</td><td>Wisdom</td></tr>
+        </table>
+
+        <h3>⚔ Combat system</h3>
+        <p>Each class has three abilities, on the <b>1 / 2 / 3</b> keys or the purple buttons in Player Options:</p>
+        <table>
+            <tr><th>Class</th><th>1 — Attack</th><th>2 — Spell (charge)</th><th>3 — Power (cooldown)</th></tr>
+            <tr><td>Fighter</td><td>Sword Strike 1d8, melee</td><td>Battle Cry 1d4 — blesses self (+2 Atk, 3 turns) and hits all adjacent</td><td>Cleave 2d8 — hits every adjacent enemy (3-turn cd)</td></tr>
+            <tr><td>Archer</td><td>Bow Shot 1d8, range 5</td><td>Pinning Shot 1d6, range 5 — slows target 3 turns</td><td>Arrow Volley 2d8 — up to 3 enemies in range (3-turn cd)</td></tr>
+            <tr><td>Rogue</td><td>Dagger Slash 1d6, melee</td><td>Poison Vial 1d6, range 3 — poisons 3 turns</td><td>Backstab 3d6 — may crit for +50% (3-turn cd)</td></tr>
+            <tr><td>Wizard</td><td>Arcane Bolt 1d10, range 4</td><td>Fireball 2d6, range 4 — splash half to adjacent</td><td>Lightning Storm 3d10 — strongest enemy in range 5 (4-turn cd)</td></tr>
+            <tr><td>Cleric</td><td>Mace Blow 1d6, melee</td><td>Healing Word 2d4, range 2 — heals most wounded ally (or self)</td><td>Divine Smite 2d8 radiant (3-turn cd)</td></tr>
+        </table>
+        <p><b>Damage formula:</b> dice + stat modifier ((stat − 10) ÷ 2) + level bonus (+1 per 2 levels) + Power Items (+2 each). Spending attribute points on your class's key stat directly raises your damage. Every roll is written to the Adventure Log and echoed in the Dice Roller panel.</p>
+        <p><b>Spell charges:</b> 2 + level÷3 + casting-stat modifier. Restored by Resting or descending stairs. <b>Power attacks</b> recharge after their cooldown, shown under the ability buttons.</p>
+        <p>Walking into a monster also attacks it (basic melee). Monsters strike back when attacked in melee, and nearby allies give +2 damage each (max +6) and improve your defense.</p>
+
+        <h3>👹 Bestiary</h3>
+        <table>
+            <tr><th>Monster</th><th>HP</th><th>Atk</th><th>Behavior</th></tr>
+            <tr><td>🐀 Giant Rat</td><td>8</td><td>2</td><td>Pack hunter — advances when another rat is near</td></tr>
+            <tr><td>💀 Skeleton</td><td>10</td><td>3</td><td>Patrols and wanders toward noise</td></tr>
+            <tr><td>👹 Orc</td><td>12</td><td>4</td><td>Brute — charges when close</td></tr>
+            <tr><td>👺 Goblin</td><td>9</td><td>3</td><td>Coward — flees when adjacent</td></tr>
+            <tr><td>🐍 Viper</td><td>7</td><td>5</td><td>Ranged spitter — attacks from up to 4 spaces</td></tr>
+            <tr><td>💀 Dark Knight</td><td>18</td><td>5</td><td>Heavy brute</td></tr>
+            <tr><td>🐉 Manticore</td><td>20</td><td>6</td><td>Ranged, dangerous</td></tr>
+            <tr><td>🐉 Dragon</td><td>30</td><td>8</td><td>Apex brute</td></tr>
+        </table>
+        <p>Monster HP and damage scale with dungeon depth and difficulty. Every 5th floor holds a <b>boss</b> (Bone Tyrant, Molten Colossus, Frost Lich, Swarm Queen, Shadow Dragon) with massive HP.</p>
+
+        <h3>🧪 Items &amp; status effects</h3>
+        <ul>
+            <li>🧪 <b>Healing Potion</b> — restores 20 HP • 📜 <b>Scroll of Blessing</b> — +2 Atk, 5 turns • ⚡ <b>Potion of Haste</b> — +2 movement, 4 turns • 🍃 <b>Antidote</b> — cures poison • 🗝 <b>Iron Key</b> — opens a locked door</li>
+            <li><b>Poison</b> ☠ damage each turn • <b>Stun</b> blocks acting • <b>Bless</b> +Atk • <b>Haste</b> +movement • <b>Slow</b> −movement. The active sheet's border tints with the effect color.</li>
+        </ul>
+
+        <h3>🎲 Dice roller</h3>
+        <p>Under Player Options: pick dice count, type (d4–d%), modifier, then <b>Roll</b> — or <b>Adv</b>/<b>Dis</b> for advantage/disadvantage d20s. Rolls are cryptographically random, logged to the Adventure Log, shared to multiplayer chat, and natural 20/1 highlighted. The game's own ability rolls appear here too.</p>
+
+        <h3>💀 Death &amp; difficulty</h3>
+        <ul>
+            <li><b>Easy / Normal</b>: downed members may make a death save (30% to cling on at 25% HP). Shrines Θ and Clerics can revive the fallen.</li>
+            <li><b>Hard / Nightmare</b>: permadeath — the fallen stay dead (remove them with the × at the bottom of their sheet). More and stronger monsters, less XP.</li>
+        </ul>
+
+        <h3>📈 Leveling</h3>
+        <p>XP comes from <b>exploring</b> (3 XP the first time you step on a tile; pacing back and forth earns nothing), kills (10–25 + Wis bonus), and Power Items (60). Each level: +2 to stats you invested starting points in, +1 every second level to the rest, full heal, higher max HP/Atk/Def. XP needed grows with level and shrinks with party size.</p>
+
+        <h3>🌐 Multiplayer</h3>
+        <ol>
+            <li>Run the local server (<code>npm start</code>), open the page on each computer.</li>
+            <li>One player clicks <b>Network → Host Game</b> (optionally as spectator GM). Others enter the Host ID and <b>Join</b>.</li>
+            <li>Each joiner is assigned a party member. Everyone ticks <b>Ready</b> — the first move unlocks only when all are ready.</li>
+            <li>The host is authoritative; actions are confirmed or rolled back. Disconnected players can rejoin and get their character back, with chat history replayed.</li>
+            <li>Optional <b>turn timer</b> auto-ends slow turns. Party chat and dice rolls are shared.</li>
+        </ol>
+
+        <h3>💾 Saving</h3>
+        <p>Esc menu → pick a save slot name → Save / Load / Delete. Loading warns before replacing your current game. Saves live in your browser's local storage.</p>
+
+        </div>
+        <button id="readme-close-bottom" type="button" class="readme-close" style="margin-top:10px;">✕ Close</button>
+        <button id="readme-print-bottom" type="button" class="readme-close readme-print" style="margin-top:10px;">🖨 Print</button>
+    </dialog>
+
+    <dialog id="network-dialog" aria-labelledby="network-dialog-title">
+        <h2 id="network-dialog-title">Network Game</h2>
+        <p style="font-size:0.8rem; margin-bottom:10px;">Host a game or join another player on the same LAN/WAN. All players must have this page open.</p>
+        <label style="display:flex; flex-direction:column; gap:4px; margin-bottom:10px; font-size:0.8rem;">
+            Signaling server
+                    <input id="signaling-url" type="text" value="ws://localhost:8080" style="padding:6px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:0.8rem;">
+            <input id="host-as-gm" type="checkbox"> Host as GM (spectator, no assigned character)
+        </label>
+        <div style="display:grid; gap:10px; margin-bottom:10px;">
+            <button id="host-button" type="button" style="background:#4caf50;">Host Game</button>
+            <div style="display:flex; gap:8px;">
+                <input id="join-host-id" type="text" placeholder="Host ID" style="flex:1; padding:6px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">
+                <button id="join-button" type="button" style="background:#2196f3; color:#fff;">Join</button>
+            </div>
+        </div>
+        <p id="host-id-display" style="color:#ffcc00; font-size:0.85rem; min-height:1.2em;"></p>
+        <p id="network-mode" style="color:#b9b3a3; font-size:0.75rem; min-height:1.2em;"></p>
+        <div id="lobby-section" style="display:none; margin-top:12px; padding:12px; border:1px solid #4a4a6a; border-radius:6px; background:#12121a;">
+            <h3 style="color:#ffcc00; margin:0 0 8px; font-size:0.85rem;">Pre-Game Lobby</h3>
+            <ul id="lobby-roster" style="list-style:none; padding:0; margin:0 0 10px; font-size:0.8rem; line-height:1.6;"></ul>
+            <div id="lobby-actions" style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button id="ready-button" type="button" style="background:#2196f3; color:#fff; flex:1; min-width:90px;">Ready</button>
+                <button id="start-game-button" type="button" style="display:none; background:#4caf50; color:#fff; flex:1; min-width:90px;">Start Game</button>
+            </div>
+        </div>
+        <div style="margin-top:12px; padding-top:12px; border-top:1px solid #4a4a6a;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:0.8rem; margin-bottom:8px;">
+                <input id="turn-timer-toggle" type="checkbox"> Turn timer
+                <input id="turn-timer-seconds" type="number" min="10" max="300" value="60" style="width:60px; padding:4px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">s
+            </label>
+            <div id="turn-timer" style="color:#ffcc00; font-size:0.85rem; min-height:1.2em;"></div>
+        </div>
+        <div style="display:flex; justify-content:flex-end; margin-top:12px;">
+            <button id="network-cancel" type="button" class="secondary" style="background:transparent; color:#c0d0ce; border:1px solid #42636a; border-radius:6px;">Close</button>
+        </div>
+    </dialog>
+
+    <script>
+    // If the game has not drawn within 4 seconds (stale cached module, blocked
+    // script, etc.), force one cache-busting reload, then show a plain-text
+    // explanation instead of a blank page.
+    (function () {
+        var key = 'pdc-force-reload';
+        window.addEventListener('load', function () {
+            setTimeout(function () {
+                var drew = document.querySelector('#character-sheet-list .character-sheet') || document.querySelector('#dungeon-map-content .map-cell');
+                if (drew) { sessionStorage.removeItem(key); return; }
+                if (!sessionStorage.getItem(key) && location.protocol !== 'file:') {
+                    sessionStorage.setItem(key, '1');
+                    var u = new URL(location.href); u.searchParams.set('nocache', Date.now()); location.replace(u.toString());
+                    return;
+                }
+                var box = document.createElement('div');
+                box.style.cssText = 'position:fixed;inset:0;background:#000;color:#ffcc00;font:16px/1.6 monospace;padding:40px;z-index:99999;overflow:auto';
+                box.id = 'pdc-start-help'; box.innerHTML = '<h2>PixelBear did not start</h2><p>The game script did not run. Most likely causes:</p><ol>' +
+                    '<li>The page was opened as a <b>file://</b> link. Browsers block game modules from local files. Run <b>Run_Game_Server_PixelBear_Dungeon_Crawler.cmd</b> in the game folder and use <b>http://localhost:8080/crawler.html</b>.</li>' +
+                    '<li>An old copy is cached. Press <b>Ctrl+Shift+Delete</b>, clear cached files, then reload.</li>' +
+                    '<li>The local server is not running. Run <b>Run_Game_Server_PixelBear_Dungeon_Crawler.cmd</b> (or <code>npm start</code>).</li></ol>' +
+                    '<p>Protocol: <b>' + location.protocol + '</b> &nbsp; Page build: <b>' + ((document.querySelector('script[type=module]') || {}).src || '?') + '</b></p>' +
+                    '<p>Error (if any): <b>' + (window.__pdcLastError || 'none captured') + '</b></p>';
+                document.body.appendChild(box);
+            }, 4000);
+        });
+        window.addEventListener('error', function (e) { window.__pdcLastError = e.message || String(e); }, true);
+    })();
+    </script>
+    <script type="module" src="modules/main.js?v=mvvrqkfn"></script>
+</body>
+</html>
