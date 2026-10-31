@@ -10,10 +10,10 @@ import {
     BIOMES,
     BOSSES,
     ITEMS
-} from './config.js?v=mvws83vy';
-import { positionKey, shuffle, deepClone } from './utils.js?v=mvws83vy';
-import { activeMember } from './state.js?v=mvws83vy';
-import { setMovementAllowance, getDifficultySettings } from './party.js?v=mvws83vy';
+} from './config.js?v=mvwt1zkt';
+import { positionKey, shuffle, deepClone } from './utils.js?v=mvwt1zkt';
+import { activeMember } from './state.js?v=mvwt1zkt';
+import { setMovementAllowance, getDifficultySettings } from './party.js?v=mvwt1zkt';
 
 export function mapDimensionsForLevel(dungeonLevel) {
     const dangerTier = Math.floor((dungeonLevel - 1) / 5);
@@ -576,4 +576,4 @@ export function setPartyFormation(game, formationName) {
     game.formationOffsets = formations[game.formation] || formations.cluster;
 }
 
-import { ENEMIES, MAX_ENEMY_SCALE_LEVEL, MAX_ENEMY_ATTACK_BONUS } from './config.js?v=mvws83vy';
+import { ENEMIES, MAX_ENEMY_SCALE_LEVEL, MAX_ENEMY_ATTACK_BONUS } from './config.js?v=mvwt1zkt';

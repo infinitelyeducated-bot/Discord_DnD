@@ -1,5 +1,5 @@
-import { positionKey } from './utils.js?v=mvws83vy';
-import { isWalkable } from './map.js?v=mvws83vy';
+import { positionKey } from './utils.js?v=mvwt1zkt';
+import { isWalkable } from './map.js?v=mvwt1zkt';
 
 // Shortest walking distance from start to target, or Infinity if it is farther
 // than maxDistance. The target tile itself may be occupied (e.g. a monster):

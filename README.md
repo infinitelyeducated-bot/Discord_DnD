@@ -29,7 +29,7 @@ The dungeon map is its own little world:
 - **Pan** — **right-click and drag** anywhere on the map to scroll it around.
 - **Rotate** — **left-click and hold**: the map turns smoothly (90° steps, ~0.5 s each). Hold the left half to turn counter-clockwise, the right half to turn clockwise.
 
-The mouse shows a magnifying-glass cursor over the map. Zoom, pan and rotation only change your *view* — the game grid underneath stays the same.
+The mouse shows a magnifying-glass cursor over the map (no % readout — the toolbar is just + / −). Zoom, pan and rotation only change your *view* — the game grid underneath stays the same.
 
 ## Controls
 
@@ -141,6 +141,8 @@ Every class has three abilities, used with the buttons under Player Options or t
 - Every ability roll is written to the Adventure Log with its dice, bonuses and total, and echoed in the Dice Roller panel.
 
 ### Dice roller
+
+Every roll also lands in an **animated dice arena** in the bottom-right corner: SVG dice (shapes ported from the DM Toolkit roller) tumble in, show their faces, glow green on a natural 20 and red on a natural 1, and fade after a few seconds. It fires for panel rolls, advantage/disadvantage, and the game's own ability rolls.
 
 An interactive dice panel sits under Player Options: choose count, die type (d4–d%), and modifier, then **Roll** (or **Adv**/**Dis** for advantage d20s). Rolls are cryptographically random, logged to the Adventure Log, broadcast to multiplayer chat, and natural 20s/1s are highlighted. Ability rolls made by the game appear in the same panel, so all randomness is visible in one place.
 
