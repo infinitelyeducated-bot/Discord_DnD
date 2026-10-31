@@ -123,7 +123,7 @@
             grid-template-rows: minmax(320px, 1fr) minmax(140px, 170px);
             grid-template-areas:
                 "map map side"
-                "chat log side";
+                "log log side";
             align-items: stretch;
             gap: 10px;
             min-height: 520px;
@@ -162,42 +162,6 @@
             min-width: 0;
             min-height: 0;
             overflow: hidden;
-        }
-
-        #chat-section {
-            grid-area: chat;
-            display: flex;
-            flex-direction: column;
-            min-height: 0;
-            min-width: 0;
-            max-width: 100%;
-            overflow: hidden;
-            border: 2px solid #4a4a6a;
-            border-radius: 8px;
-            background: #10101b;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-
-        #chat-section .panel-title {
-            flex: 0 0 auto;
-        }
-
-        #chat-section .chat-log {
-            flex: 1 1 auto;
-            min-height: 40px;
-            height: auto;
-            overflow-y: auto;
-            margin-bottom: 6px;
-        }
-
-        #chat-section .chat-form {
-            flex: 0 0 auto;
-            min-width: 0;
-        }
-
-        #chat-section .chat-form input {
-            min-width: 0;
         }
 
         .main-stage .game-log-section {
@@ -1294,51 +1258,6 @@
             image-rendering: pixelated;
         }
 
-        .chat-log {
-            overflow-y: auto;
-            background: #0a0a0a;
-            border: 1px solid #4a4a6a;
-            border-radius: 4px;
-            padding: 6px;
-            font-size: 0.75rem;
-            margin-bottom: 6px;
-            overflow-wrap: break-word;
-        }
-
-        .chat-entry {
-            margin-bottom: 4px;
-        }
-
-        .chat-time { color: #888; }
-
-        .chat-sender {
-            color: #ffcc00;
-            font-weight: bold;
-        }
-
-        .chat-form {
-            display: flex;
-            gap: 6px;
-        }
-
-        .chat-form input {
-            flex: 1;
-            padding: 6px;
-            background: #0a0a0a;
-            border: 1px solid #65657b;
-            border-radius: 4px;
-            color: #fff;
-        }
-
-        .chat-form button {
-            padding: 6px 10px;
-            background: #2196f3;
-            border: none;
-            border-radius: 4px;
-            color: #fff;
-            cursor: pointer;
-        }
-
         .turn-order-bar {
             display: flex;
             gap: 8px;
@@ -1677,9 +1596,8 @@
                 grid-template-areas:
                     "map"
                     "side"
-                    "chat"
                     "log";
-                grid-template-rows: auto auto auto auto;
+                grid-template-rows: auto auto auto;
             }
 
             .action-legend {
@@ -1819,14 +1737,7 @@
                         <div id="dice-log" class="dice-log" aria-live="polite"></div>
                     </section>
                 </section>
-                <section id="chat-section" aria-label="Chat">
-                    <h2 class="panel-title" style="font-size:0.85rem;">PARTY CHAT</h2>
-                    <div id="chat-log" class="chat-log"></div>
-                    <form id="chat-form" class="chat-form">
-                        <input id="chat-input" type="text" placeholder="Send a message..." maxlength="200" autocomplete="off">
-                        <button type="submit">Send</button>
-                    </form>
-                </section>
+                <!-- PARTY CHAT removed: Discord #general is the chat channel (host chats there) -->
                 <section class="game-log-section" aria-label="Game events">
                     <h2 class="panel-title" style="font-size:0.85rem;">ADVENTURE LOG</h2>
                     <div id="game-log" class="log-panel"></div>
@@ -1999,7 +1910,7 @@
         </ul>
 
         <h3>🎲 Dice roller</h3>
-        <p>Under Player Options: pick dice count, type (d4–d%), modifier, then <b>Roll</b> — or <b>Adv</b>/<b>Dis</b> for advantage/disadvantage d20s. Rolls are cryptographically random, logged to the Adventure Log, shared to multiplayer chat, and natural 20/1 highlighted. The game's own ability rolls appear here too.</p>
+        <p>Under Player Options: pick dice count, type (d4–d%), modifier, then <b>Roll</b> — or <b>Adv</b>/<b>Dis</b> for advantage/disadvantage d20s. Rolls are cryptographically random, logged to the Adventure Log)Skip, and natural 20/1 highlighted. The game's own ability rolls appear here too.</p>
 
         <h3>💀 Death &amp; difficulty</h3>
         <ul>
@@ -2015,8 +1926,8 @@
             <li>Run the local server (<code>npm start</code>), open the page on each computer.</li>
             <li>One player clicks <b>Network → Host Game</b> (optionally as spectator GM). Others enter the Host ID and <b>Join</b>.</li>
             <li>Each joiner is assigned a party member. Everyone ticks <b>Ready</b> — the first move unlocks only when all are ready.</li>
-            <li>The host is authoritative; actions are confirmed or rolled back. Disconnected players can rejoin and get their character back, with chat history replayed.</li>
-            <li>Optional <b>turn timer</b> auto-ends slow turns. Party chat and dice rolls are shared.</li>
+            <li>The host is authoritative; actions are confirmed or rolled back. Disconnected players can rejoin and get their character back.</li>
+            <li>Optional <b>turn timer</b> auto-ends slow turns. Chat and dice rolls go through Discord.</li>
         </ol>
 
         <h3>💾 Saving</h3>
@@ -2030,7 +1941,7 @@
     <dialog id="network-dialog" aria-labelledby="network-dialog-title">
         <h2 id="network-dialog-title">Discord & Turn Options</h2>
         <div class="modal-body">
-            <p class="muted">Multiplayer in this edition runs through the Discord relay. The DM's copy shares the screen; players join through Discord and see the chat and action log here.</p>
+            <p class="muted">Multiplayer in this edition runs through the Discord relay. The DM's copy shares the screen; players join through Discord. Chat and the action log live in the #general channel — the host chats straight into Discord.</p>
             <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; margin:10px 0;">
                 <input id="turn-timer-toggle" type="checkbox"> Turn timer
                 <input id="turn-timer-seconds" type="number" min="10" max="300" value="60" style="width:60px; padding:4px; background:#0a0a0a; color:#fff; border:1px solid #65657b; border-radius:4px;">s
@@ -2071,6 +1982,6 @@
         window.addEventListener('error', function (e) { window.__pdcLastError = e.message || String(e); }, true);
     })();
     </script>
-    <script type="module" src="modules/main.js?v=mvwjhe1p"></script>
+    <script type="module" src="modules/main.js?v=mvwp0u0j"></script>
 </body>
 </html>
