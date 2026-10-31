@@ -4,6 +4,7 @@ import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDiffi
 import { createLogger } from './log.js?v=mvvrqkfn';
 import { LayoutManager } from './layout.js?v=mvvrqkfn';
 import { NetworkManager } from './network.js?v=mvvrqkfn';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvvrqkfn';
 import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvvrqkfn';
 import { bindInput } from './input.js?v=mvvrqkfn';
 import { handleRemoteAction, sendLocalAction, confirmLocalAction, rejectLocalAction } from './network-actions.js?v=mvvrqkfn';
@@ -52,12 +53,13 @@ function startNewGame() {
 }
 
 export function updateUI() {
+    bindBubbles(game);
     renderMap(game, document.getElementById('dungeon-map-content'));
     renderMinimap(game, document.getElementById('minimap'));
     renderLegend(game, document.getElementById('player-legend-markers'));
     renderTurnOrder(game, document.getElementById('turn-order-bar'));
     renderTopPartyRow(game, document.getElementById('top-party-row'));
-    renderFloatingTexts(game, document.getElementById('floating-text-layer'));
+    renderFloatingTexts(game, document.getElementById('bubble-layer'));
     const biome = game.biome;
     const levelTitle = document.getElementById('level-title');
     levelTitle.textContent = `${biome ? biome.name + ' — ' : ''}DUNGEON LEVEL ${activeMember(game)?.dungeonLevel || 1}`;
@@ -130,6 +132,10 @@ function canMove(game, member, direction) {
 }
 
 function appendLogRecord(record) {
+    if (record && record.message && record.memberId) {
+        const firstLine = String(record.message).split(String.fromCharCode(10))[0];
+        if (firstLine.length > 4) handleChatBubble({ sender: record.actorName || 'Dungeon', memberId: record.memberId, text: firstLine, timestamp: Date.now() });
+    }
     const logPanel = document.getElementById('game-log');
     const entry = document.createElement('div');
     entry.className = 'log-entry';
@@ -296,6 +302,7 @@ function setupNetworkHandlers() {
 }
 
 function appendChatMessage(message) {
+    handleChatBubble(message);
     const chatLog = document.getElementById('chat-log');
     if (!chatLog) return;
     const entry = document.createElement('div');
@@ -770,12 +777,14 @@ import { movementAllowance } from './party.js?v=mvvrqkfn';
 import { removePartyMember } from './party.js?v=mvvrqkfn';
 
 function startFloatingTextLoop() {
+    window.__pdcNet = networkManager;
     let last = performance.now();
     function frame(now) {
         const delta = (now - last) / 1000;
         last = now;
         updateFloatingTexts(delta);
-        renderFloatingTexts(game, document.getElementById('floating-text-layer'));
+        renderFloatingTexts(game, document.getElementById('bubble-layer'));
+        updateBubbles(delta);
         requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

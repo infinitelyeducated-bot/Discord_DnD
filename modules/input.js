@@ -1,4 +1,4 @@
-import { move, attack, standGuard, rest, finishTurn } from './actions.js?v=mvvrqkfn';
+import { move, attack, standGuard, rest, finishTurn, setFormation, setGameDifficulty, useInventoryItem } from './actions.js?v=mvvrqkfn';
 import { sendLocalAction } from './network-actions.js?v=mvvrqkfn';
 import { activeMember } from './state.js?v=mvvrqkfn';
 import { nearestAttackTarget } from './combat.js?v=mvvrqkfn';
