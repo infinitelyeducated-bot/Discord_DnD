@@ -71,6 +71,18 @@ The currently active character sheet is outlined in **yellow** and tinted by sta
 8. The optional **Turn timer** auto-ends a turn when time runs out.
 9. **Pre-game lobby** lets players mark Ready/Not Ready before the host starts the game. Reconnecting clients see the current lobby state, and chat history is replayed to them.
 
+## Discord relay
+
+The game can also route its party chat and the action log through a Discord text channel, and show what players type there as chat bubbles over their characters.
+
+1. Create a bot in the Discord Developer Portal (Applications → New Application → Bot → Reset Token). Add it to your server and give it **View Channel**, **Send Messages** and **Read Message History** on the game channel. Right-click the channel → **Copy channel ID**.
+2. Copy `discord-config.example.json` to `discord-config.json` next to `server.js` and fill in: `token` (the bot token — never share it; this file is already git-ignored), `channelId`, and `isDm` (`true` on the DM's machine, `false` on player copies).
+3. Start the server as usual. The server log says *Discord relay: online* when the bot connects. The in-game **Party Load** panel shows a *Discord relay* status line.
+4. **On the DM's copy**: the DM's party-chat messages and the action-log lines are duplicated into the Discord channel, so viewers watching the shared screen can read them there.
+5. **On every copy**: messages players type in the Discord channel arrive as normal party-chat lines **and** as a chat bubble over the speaker's character, fading after `bubbleMs` (set `bubbleMs` to `6000`–`8000` when playing over a shared screen, which lags 1–3 s).
+
+The server still works untouched when `discord-config.json` is missing — the relay is simply off.
+
 ## In-game guide
 
 The pause menu (Esc) has a **📖 Game Guide (README)** button that opens a full in-game manual: quick start, controls, map key, class roles, the complete combat system with the damage formula, bestiary, items and status effects, dice roller, death rules, leveling, multiplayer and saving. A **🖨 Print** button inside the guide prints just the guide (game hidden, print-friendly black-on-white formatting) through the browser's standard print dialog.
