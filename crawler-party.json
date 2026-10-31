@@ -1,0 +1,22 @@
+{
+  "format": "mednd-crawler-party",
+  "version": 1,
+  "characterCount": 1,
+  "characters": [
+    {
+      "name": "Player One",
+      "strength": 10,
+      "dexterity": 10,
+      "constitution": 10,
+      "intelligence": 10,
+      "wisdom": 10,
+      "charisma": 10,
+      "race": "Human",
+      "class": "Fighter",
+      "level": 1,
+      "hitPoints": 10,
+      "armorClass": 10,
+      "initiative": 0
+    }
+  ]
+}
