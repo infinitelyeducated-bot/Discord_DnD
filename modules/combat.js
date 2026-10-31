@@ -1,22 +1,23 @@
-import { POWER_ITEM_DROP_CHANCE, MAX_CHARACTER_LEVEL, ENEMIES, MAX_ENEMY_SCALE_LEVEL, MAX_ENEMY_ATTACK_BONUS, BOSSES, ITEMS } from './config.js?v=mvwqbkdq';
-import { positionKey } from './utils.js?v=mvwqbkdq';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwqbkdq';
-import { addFloatingText } from './ui.js?v=mvwqbkdq';
-import { activeMember } from './state.js?v=mvwqbkdq';
-import { playSound } from './audio.js?v=mvwqbkdq';
+import { POWER_ITEM_DROP_CHANCE, MAX_CHARACTER_LEVEL, ENEMIES, MAX_ENEMY_SCALE_LEVEL, MAX_ENEMY_ATTACK_BONUS, BOSSES, ITEMS } from './config.js?v=mvwrcxwr';
+import { positionKey } from './utils.js?v=mvwrcxwr';
+import { pathDistanceWithin } from './pathfinding.js?v=mvwrcxwr';
+import { addFloatingText } from './ui.js?v=mvwrcxwr';
+import { activeMember } from './state.js?v=mvwrcxwr';
+import { playSound } from './audio.js?v=mvwrcxwr';
 import {
     adjacentPartyMembers,
     adjacentDeadPartyMembers,
     experienceRequired,
     gainExperience,
     updateDerivedStats,
+    priorityDamageBonus,
     getDifficultySettings,
     addItemToInventory,
     addStatusEffect,
     tickStatusEffects,
     clearStatusEffect,
     hasStatusEffect
-} from './party.js?v=mvwqbkdq';
+} from './party.js?v=mvwrcxwr';
 
 export function handleTrap(game, x, y, logMessage) {
     const member = activeMember(game);
@@ -539,7 +540,7 @@ export function useItem(game, itemKey, member, logMessage) {
     return true;
 }
 
-import { removeItemFromInventory, setMovementAllowance } from './party.js?v=mvwqbkdq';
+import { removeItemFromInventory, setMovementAllowance } from './party.js?v=mvwrcxwr';
 
 export function nearestAttackTarget(game, member) {
     if (!member?.position) return null;

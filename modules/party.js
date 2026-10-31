@@ -1,5 +1,5 @@
-import { CLASSES, CLASS_SETTINGS, MAX_PARTY_SIZE, MAX_CHARACTER_LEVEL, DIFFICULTIES } from './config.js?v=mvwqbkdq';
-import { activeMember } from './state.js?v=mvwqbkdq';
+import { CLASSES, CLASS_SETTINGS, MAX_PARTY_SIZE, MAX_CHARACTER_LEVEL, DIFFICULTIES } from './config.js?v=mvwrcxwr';
+import { activeMember } from './state.js?v=mvwrcxwr';
 
 export function movementAllowance(member) {
     return 10;
@@ -15,11 +15,32 @@ export function setMovementAllowance(member) {
     member.movesRemaining = member.movesPerTurn;
 }
 
+// A class's priority stat is the one its attack scales from:
+//   fighter → strength, archer → dexterity, rogue → initiative,
+//   wizard → intelligence, cleric → wisdom.
+export function classPriorityStat(classKey) {
+    switch (classKey) {
+        case 'fighter': return 'strength';
+        case 'archer': return 'dexterity';
+        case 'rogue': return 'initiative';
+        case 'wizard': return 'intelligence';
+        case 'cleric': return 'wisdom';
+        default: return 'strength';
+    }
+}
+
+// Damage from invested priority stat: every 5 points above 10 adds
+// +1.25 * current level to the member's attack.
+export function priorityDamageBonus(member) {
+    const stat = classPriorityStat(member.classKey);
+    const invested = Math.max(0, (member[stat] || 0) - 10);
+    return Math.floor(invested / 5) * 1.25 * (member.level || 1);
+}
+
 export function updateDerivedStats(member) {
     const levelBonus = member.level - 1;
     member.maxHp = Math.round(member.classBase.maxHp + levelBonus * 5 + Math.max(0, member.constitution - 10) * 5);
-    member.attack = member.classBase.attack + levelBonus +
-        (member.classKey === 'fighter' ? Math.floor(Math.max(0, member.strength - 10) / 5) : 0) +
+    member.attack = member.classBase.attack + levelBonus + priorityDamageBonus(member) +
         (member.powerItems || 0) * 5;
     member.defense = member.classBase.defense + levelBonus + Math.floor(Math.max(0, member.dexterity - 10) / 4);
     const bless = member.statusEffects?.find(e => e.type === 'bless');
@@ -190,4 +211,4 @@ export function adjacentDeadPartyMembers(game, member) {
     );
 }
 
-import { PLAYER_COLORS, PLAYER_MARKERS } from './config.js?v=mvwqbkdq';
+import { PLAYER_COLORS, PLAYER_MARKERS } from './config.js?v=mvwrcxwr';

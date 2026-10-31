@@ -1,11 +1,11 @@
-import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwqbkdq';
-import { activeMember } from './state.js?v=mvwqbkdq';
-import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwqbkdq';
-import { positionKey } from './utils.js?v=mvwqbkdq';
-import { nearestAttackTarget } from './combat.js?v=mvwqbkdq';
-import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwqbkdq';
-import { pathDistanceWithin } from './pathfinding.js?v=mvwqbkdq';
-import { hasStatusEffect } from './party.js?v=mvwqbkdq';
+import { MAX_PARTY_SIZE, CLASSES, MAX_CHARACTER_LEVEL, PLAYER_COLORS, PLAYER_MARKERS, BIOMES } from './config.js?v=mvwrcxwr';
+import { activeMember } from './state.js?v=mvwrcxwr';
+import { adjacentDeadPartyMembers, updateDerivedStats, setMovementAllowance, experienceRequired } from './party.js?v=mvwrcxwr';
+import { positionKey } from './utils.js?v=mvwrcxwr';
+import { nearestAttackTarget } from './combat.js?v=mvwrcxwr';
+import { isWalkable, updateExplored, getBiome, getItemAt, isShrineAt } from './map.js?v=mvwrcxwr';
+import { pathDistanceWithin } from './pathfinding.js?v=mvwrcxwr';
+import { hasStatusEffect } from './party.js?v=mvwrcxwr';
 
 const CLASS_AVATARS = {
     fighter: '⚔',
@@ -563,8 +563,28 @@ export function updateMapSizing() {
     if (!mapViewport || !mapContent) return;
     const fontSize = Math.max(7.5, Math.min(11.25, (mapViewport.clientWidth / 25.6))) * mapZoom;
     mapViewport.style.fontSize = `${fontSize}px`;
-    mapContent.style.padding = `${mapViewport.clientHeight / 2}px ${mapViewport.clientWidth / 2}px`;
+    // Center the map in its area: pad so the map itself is centered when it
+    // fits, and keep the current center stable when it overflows.
+    const vw = mapViewport.clientWidth, vh = mapViewport.clientHeight;
+    const cx = mapViewport.scrollLeft + vw / 2, cy = mapViewport.scrollTop + vh / 2;
+    const padX = vw / 2, padY = vh / 2;
+    mapContent.style.padding = `${padY}px ${padX}px`;
+    mapViewport.scrollLeft = Math.max(0, cx - vw / 2);
+    mapViewport.scrollTop = Math.max(0, cy - vh / 2);
 }
+
+let mapRotation = 0; // degrees
+export function rotateMap(dir) {
+    const content = document.getElementById('dungeon-map-content');
+    if (!content) return;
+    mapRotation = (mapRotation + dir * 90 + 360) % 360;
+    content.style.transform = 'rotate(' + mapRotation + 'deg)';
+    content.style.transformOrigin = 'center center';
+    // after rotation the scroll metrics change; recenter
+    const vp = document.getElementById('dungeon-map');
+    if (vp) { vp.scrollLeft = (content.scrollWidth - vp.clientWidth) / 2; vp.scrollTop = (content.scrollHeight - vp.clientHeight) / 2; }
+}
+export function getMapRotation() { return mapRotation; }
 
 export function centerMapOnActiveMember(game) {
     const member = activeMember(game);

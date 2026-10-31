@@ -1,15 +1,15 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwqbkdq';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwqbkdq';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwqbkdq';
-import { createLogger } from './log.js?v=mvwqbkdq';
-import { LayoutManager } from './layout.js?v=mvwqbkdq';
-import { DiscordRelay } from './discord.js?v=mvwqbkdq';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwqbkdq';
-import { zoomMapAt, setMapZoom, getMapZoom } from './ui.js?v=mvwqbkdq';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwqbkdq';
-import { bindInput } from './input.js?v=mvwqbkdq';
-import { nearestAttackTarget } from './combat.js?v=mvwqbkdq';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwqbkdq';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwrcxwr';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwrcxwr';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers, classPriorityStat } from './party.js?v=mvwrcxwr';
+import { createLogger } from './log.js?v=mvwrcxwr';
+import { LayoutManager } from './layout.js?v=mvwrcxwr';
+import { DiscordRelay } from './discord.js?v=mvwrcxwr';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwrcxwr';
+import { zoomMapAt, setMapZoom, getMapZoom, rotateMap } from './ui.js?v=mvwrcxwr';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwrcxwr';
+import { bindInput } from './input.js?v=mvwrcxwr';
+import { nearestAttackTarget } from './combat.js?v=mvwrcxwr';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwrcxwr';
 
 let game = createGame();
 let gameLog = [];
@@ -91,7 +91,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvwqbkdq').then(m => {
+            import('./actions.js?v=mvwrcxwr').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -206,7 +206,7 @@ function startTurnTimer(seconds) {
         if (turnTimeLeft <= 0) {
             stopTurnTimer();
             logMessage('Turn timer expired.', activeMember(game));
-            import('./actions.js?v=mvwqbkdq').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
+            import('./actions.js?v=mvwrcxwr').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
     }, 1000);
 }
@@ -265,11 +265,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwqbkdq').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwrcxwr').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwqbkdq').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwrcxwr').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -346,7 +346,7 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvwqbkdq').then(m => {
+            import('./actions.js?v=mvwrcxwr').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
@@ -363,6 +363,40 @@ function bindGameUI() {
     }, { passive: false });
     mapViewport?.addEventListener('mouseenter', () => { mapViewport.style.cursor = 'zoom-in'; });
     mapViewport?.addEventListener('mouseleave', () => { mapViewport.style.cursor = ''; });
+
+    // Right-click drag = pan the map
+    let panning = null;
+    mapViewport?.addEventListener('contextmenu', e => e.preventDefault());
+    mapViewport?.addEventListener('mousedown', e => {
+        if (e.button === 2) {
+            panning = { x: e.clientX, y: e.clientY, l: mapViewport.scrollLeft, t: mapViewport.scrollTop };
+            mapViewport.style.cursor = 'grabbing';
+            e.preventDefault();
+        } else if (e.button === 0) {
+            // left hold = rotation (while held, rotate 90° every 0.18s)
+            startRotateHold(mapViewport, e);
+        }
+    });
+    window.addEventListener('mousemove', e => {
+        if (panning) {
+            mapViewport.scrollLeft = panning.l - (e.clientX - panning.x);
+            mapViewport.scrollTop = panning.t - (e.clientY - panning.y);
+        }
+    });
+    window.addEventListener('mouseup', e => {
+        if (e.button === 2) { panning = null; mapViewport.style.cursor = 'zoom-in'; }
+        stopRotateHold();
+    });
+
+    // rotation state
+    let rotTimer = null; let rotDir = 0;
+    function startRotateHold(viewport, e) {
+        const rect = viewport.getBoundingClientRect();
+        rotDir = e.clientX - rect.left < rect.width / 2 ? -1 : 1; // hold left half CCW, right half CW
+        rotTimer = setInterval(() => rotateMap(rotDir), 180);
+    }
+    function stopRotateHold() { if (rotTimer) { clearInterval(rotTimer); rotTimer = null; } }
+    window._pdcRotate = rotateMap;
     document.getElementById('zoom-in')?.addEventListener('click', () => { setMapZoom(getMapZoom() * 1.2); showZoom(); });
     document.getElementById('zoom-out')?.addEventListener('click', () => { setMapZoom(getMapZoom() / 1.2); showZoom(); });
     showZoom();
@@ -517,23 +551,20 @@ function updateAttributePoints(input, direction) {
 
 function setStartingPoints(input) {
     if (game.hasStarted) return;
-    if (input.value === '') {
+    const points = input.value === '' ? null : Number(input.value);
+    if (points === null) {
         game.startingPointsPerPlayer = null;
         for (const member of game.party) {
             member.pendingAttributePoints = 0;
-            member.initiative = 0;
-            member.dexterity = 10;
-            member.intelligence = 10;
-            member.strength = 10;
-            member.constitution = 10;
-            member.wisdom = 10;
+            member.allocatedFields = [];
+            member.initiative = 0; member.dexterity = 10; member.intelligence = 10;
+            member.strength = 10; member.constitution = 10; member.wisdom = 10;
             updateDerivedStats(member);
             member.hp = Math.min(member.hp, member.maxHp);
         }
         updateUI();
         return;
     }
-    const points = Number(input.value);
     if (!Number.isInteger(points) || points < 0 || points > 544) {
         input.value = game.startingPointsPerPlayer ?? '';
         logMessage('GM starting points must be a whole number from 0 to 544.', null, 'Party Setup');
@@ -541,18 +572,17 @@ function setStartingPoints(input) {
     }
     game.startingPointsPerPlayer = points;
     for (const member of game.party) {
-        member.pendingAttributePoints = points;
-        member.allocatedFields = [];
-        member.initiative = 0;
-        member.dexterity = 10;
-        member.intelligence = 10;
-        member.strength = 10;
-        member.constitution = 10;
-        member.wisdom = 10;
+        // Auto: all granted points go into the class priority field
+        const prio = classPriorityStat(member.classKey);
+        member.initiative = 0; member.dexterity = 10; member.intelligence = 10;
+        member.strength = 10; member.constitution = 10; member.wisdom = 10;
+        member[prio] = 10 + points;
+        member.pendingAttributePoints = 0;
+        member.allocatedFields = [prio];
         updateDerivedStats(member);
         member.hp = Math.min(member.hp, member.maxHp);
     }
-    logMessage(`sets ${points} starting attribution point(s) for each player.`, null, 'Game Master');
+    logMessage('sets ' + points + ' starting attribution point(s) per player, auto-invested into each class\'s priority field.', null, 'Game Master');
     updateUI();
 }
 
@@ -560,8 +590,8 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvwqbkdq';
-import { removePartyMember } from './party.js?v=mvwqbkdq';
+import { movementAllowance } from './party.js?v=mvwrcxwr';
+import { removePartyMember } from './party.js?v=mvwrcxwr';
 
 
 function setupDiscordRelay() {
@@ -591,10 +621,10 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvwqbkdq';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwqbkdq';
-import { castAbility } from './actions.js?v=mvwqbkdq';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwqbkdq';
+import { initAudio, playSound } from './audio.js?v=mvwrcxwr';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwrcxwr';
+import { castAbility } from './actions.js?v=mvwrcxwr';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwrcxwr';
 
 function bindAudioControls() {
     initAudio();
