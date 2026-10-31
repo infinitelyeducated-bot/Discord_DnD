@@ -2,6 +2,7 @@
 // (uses the same wss/http server; purely additive, never touches signaling).
 
 import { Client, GatewayIntentBits } from 'discord.js';
+import { buildCommandLayer } from './discord-commands.js';
 import { WebSocketServer } from 'ws';
 import fs from 'fs';
 import path from 'path';
@@ -58,6 +59,7 @@ async function startDiscordRelay() {
         console.log('Discord relay: online as ' + client.user.tag);
         listVisibleChannels(client);
         resolveChannelByName(client);
+        buildCommandLayer(client, { channelId: () => CONFIG.channelId, relayPages });
     });
     client.on('messageCreate', msg => {
         if (msg.channel.id !== CONFIG.channelId || msg.author.bot) return;
