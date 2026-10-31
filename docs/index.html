@@ -1437,6 +1437,58 @@
             transition: opacity 0.1s linear;
         }
 
+
+        /* Animated dice arena — bottom-right overlay */
+        .dice-arena {
+            position: fixed;
+            right: 12px;
+            bottom: 12px;
+            z-index: 900;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            pointer-events: none;
+            max-width: 260px;
+        }
+        .dice-arena-batch {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: flex-end;
+            background: rgba(10, 10, 15, 0.85);
+            border: 1px solid #4a4a6a;
+            border-radius: 10px;
+            padding: 8px;
+            animation: arenaIn 0.25s ease-out;
+        }
+        .arena-die {
+            width: 58px;
+            text-align: center;
+            animation: arenaTumble 0.55s cubic-bezier(0.2, 0.9, 0.3, 1.35) both;
+        }
+        .arena-die-svg { width: 58px; height: 58px; display: block; margin: 0 auto; }
+        .arena-value {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: #ffe14d;
+            text-shadow: 0 0 6px rgba(255, 225, 77, 0.6);
+            margin-top: -6px;
+        }
+        .arena-crit .arena-value { color: #76ff03; text-shadow: 0 0 8px #76ff03; }
+        .arena-crit .arena-die-svg polygon { stroke: #76ff03; }
+        .arena-fail .arena-value { color: #ef5350; text-shadow: 0 0 8px #ef5350; }
+        .arena-fail .arena-die-svg polygon { stroke: #ef5350; }
+        .arena-label { width: 100%; font-size: 0.7rem; color: #b9b3a3; text-align: right; }
+        .arena-more { font-size: 0.7rem; color: #b9b3a3; }
+        .arena-out { animation: arenaOut 0.6s ease-in forwards; }
+        @keyframes arenaIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes arenaOut { to { opacity: 0; transform: translateY(10px) scale(0.92); } }
+        @keyframes arenaTumble {
+            0% { opacity: 0; transform: translateY(-26px) rotate(-160deg) scale(0.6); }
+            60% { opacity: 1; transform: translateY(3px) rotate(14deg) scale(1.06); }
+            100% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+        }
         .floating-text-layer {
             position: absolute;
             inset: 0;
@@ -1723,7 +1775,6 @@
                 <section class="map-column" id="map-column" aria-label="Dungeon map">
                     <div class="zoom-toolbar" aria-label="Zoom map">
                         <button id="zoom-out" type="button" title="Zoom out">−</button>
-                        <span id="zoom-level" style="color:#ffcc00; font-size:0.75rem; line-height:22px;">100%</span>
                         <button id="zoom-in" type="button" title="Zoom in">+</button>
                     </div>
                     <button id="fullscreen-toggle" class="fullscreen-toggle" type="button" title="Toggle fullscreen map">⛶</button>
@@ -2013,6 +2064,6 @@
         window.addEventListener('error', function (e) { window.__pdcLastError = e.message || String(e); }, true);
     })();
     </script>
-    <script type="module" src="modules/main.js?v=mvws83vy"></script>
+    <script type="module" src="modules/main.js?v=mvwt1zkt"></script>
 </body>
 </html>
