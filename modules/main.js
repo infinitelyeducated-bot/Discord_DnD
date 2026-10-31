@@ -1,14 +1,14 @@
-import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwjhe1p';
-import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwjhe1p';
-import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwjhe1p';
-import { createLogger } from './log.js?v=mvwjhe1p';
-import { LayoutManager } from './layout.js?v=mvwjhe1p';
-import { DiscordRelay } from './discord.js?v=mvwjhe1p';
-import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwjhe1p';
-import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwjhe1p';
-import { bindInput } from './input.js?v=mvwjhe1p';
-import { nearestAttackTarget } from './combat.js?v=mvwjhe1p';
-import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwjhe1p';
+import { createGame, createPartyMember, activeMember, persistSnapshot, loadStoredSnapshot, saveSnapshot, listSaveSlots, saveSlot, loadSlot, deleteSlot } from './state.js?v=mvwp0u0j';
+import { generateMap, storeActiveFloor, loadMemberFloor, setPartyFormation, isWalkable, placeNewMember } from './map.js?v=mvwp0u0j';
+import { applyCharacterClass, updateDerivedStats, setMovementAllowance, getDifficultySettings, adjacentDeadPartyMembers } from './party.js?v=mvwp0u0j';
+import { createLogger } from './log.js?v=mvwp0u0j';
+import { LayoutManager } from './layout.js?v=mvwp0u0j';
+import { DiscordRelay } from './discord.js?v=mvwp0u0j';
+import { handleChatBubble, bindBubbles, updateBubbles, setBubbleDuration } from './bubbles.js?v=mvwp0u0j';
+import { renderMap, renderLegend, updateActionButtons, renderCharacterSheets, updateMapSizing, centerMapOnActiveMember, renderMinimap, renderTurnOrder, renderFloatingTexts, updateFloatingTexts, renderTopPartyRow } from './ui.js?v=mvwp0u0j';
+import { bindInput } from './input.js?v=mvwp0u0j';
+import { nearestAttackTarget } from './combat.js?v=mvwp0u0j';
+import { MAX_PARTY_SIZE, CLASSES, DIFFICULTIES, ITEMS } from './config.js?v=mvwp0u0j';
 
 let game = createGame();
 let gameLog = [];
@@ -90,7 +90,7 @@ function renderInventoryPanel(game) {
         btn.title = item.description;
         btn.disabled = member.hp <= 0 || game.gameOver;
         btn.addEventListener('click', () => {
-            import('./actions.js?v=mvwjhe1p').then(m => {
+            import('./actions.js?v=mvwp0u0j').then(m => {
                 m.useInventoryItem(game, key, logMessage, updateUI, broadcast);
             });
         });
@@ -205,25 +205,13 @@ function startTurnTimer(seconds) {
         if (turnTimeLeft <= 0) {
             stopTurnTimer();
             logMessage('Turn timer expired.', activeMember(game));
-            import('./actions.js?v=mvwjhe1p').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
+            import('./actions.js?v=mvwp0u0j').then(m => m.finishTurn(game, logMessage, updateUI, broadcast));
         }
     }, 1000);
 }
 function stopTurnTimer() {
     if (turnTimer) { window.clearInterval(turnTimer); turnTimer = null; }
 }
-function appendChatMessage(message) {
-    handleChatBubble(message);
-    const chatLog = document.getElementById('chat-log');
-    if (!chatLog) return;
-    const entry = document.createElement('div');
-    entry.className = 'chat-entry';
-    const time = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    entry.innerHTML = `<span class="chat-time">[${time}]</span> <span class="chat-sender">${escapeHtml(message.sender)}</span>: ${escapeHtml(message.text)}`;
-    chatLog.appendChild(entry);
-    chatLog.scrollTop = chatLog.scrollHeight;
-}
-
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -276,11 +264,11 @@ function bindGameUI() {
         setStartingPoints(event.target);
     });
     document.getElementById('difficulty-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwjhe1p').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwp0u0j').then(m => m.setGameDifficulty(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('formation-select')?.addEventListener('change', event => {
-        import('./actions.js?v=mvwjhe1p').then(m => m.setFormation(game, event.target.value, logMessage));
+        import('./actions.js?v=mvwp0u0j').then(m => m.setFormation(game, event.target.value, logMessage));
         updateUI();
     });
     document.getElementById('resume-button')?.addEventListener('click', () => {
@@ -357,7 +345,7 @@ function bindGameUI() {
     document.getElementById('descend-button')?.addEventListener('click', () => {
         const member = activeMember(game);
         if (member) {
-            import('./actions.js?v=mvwjhe1p').then(m => {
+            import('./actions.js?v=mvwp0u0j').then(m => {
                 m.descendFloor(game, member, logMessage);
                 updateUI();
             });
@@ -374,18 +362,6 @@ function bindGameUI() {
         if (layoutManager.layoutEditMode) document.getElementById('escape-menu').close();
     });
     document.getElementById('reset-layout-button')?.addEventListener('click', () => layoutManager.reset());
-
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    chatForm?.addEventListener('submit', event => {
-        event.preventDefault();
-        const text = chatInput.value.trim();
-        if (!text) return;
-        const sender = 'You';
-        if (discordRelay?.isDm) discordRelay.relayChat(text, sender);
-        appendChatMessage({ type: 'chat', sender, text, timestamp: Date.now() });
-        chatInput.value = '';
-    });
 
     const discordButton = document.getElementById('network-button');
     const discordDialog = document.getElementById('network-dialog');
@@ -569,8 +545,8 @@ function refreshPartySetupMap() {
     // placeholder for any party-change map adjustments
 }
 
-import { movementAllowance } from './party.js?v=mvwjhe1p';
-import { removePartyMember } from './party.js?v=mvwjhe1p';
+import { movementAllowance } from './party.js?v=mvwp0u0j';
+import { removePartyMember } from './party.js?v=mvwp0u0j';
 
 
 function setupDiscordRelay() {
@@ -578,8 +554,9 @@ function setupDiscordRelay() {
     discordRelay = new DiscordRelay();
     discordRelay.connect();
     discordRelay.onEvent('chat', data => {
-        // players' Discord messages land in party chat + a bubble on their character
-        appendChatMessage({ type: 'chat', sender: data.sender, text: data.text, timestamp: data.timestamp, memberId: null });
+        // players' Discord messages land as a chat bubble + log line (no chat panel)
+        handleChatBubble({ sender: data.sender, text: data.text, timestamp: data.timestamp, memberId: null });
+        logMessage(data.sender + ': ' + data.text.slice(0, 140), null, data.sender);
     });
     const st = document.getElementById('discord-status');
     if (st) st.textContent = 'Discord relay: connecting…';
@@ -599,10 +576,10 @@ function startFloatingTextLoop() {
     requestAnimationFrame(frame);
 }
 
-import { initAudio, playSound } from './audio.js?v=mvwjhe1p';
-import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwjhe1p';
-import { castAbility } from './actions.js?v=mvwjhe1p';
-import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwjhe1p';
+import { initAudio, playSound } from './audio.js?v=mvwp0u0j';
+import { DICE, rollDice, onGameRoll } from './dice.js?v=mvwp0u0j';
+import { castAbility } from './actions.js?v=mvwp0u0j';
+import { ABILITIES, ensureAbilityState, spellCharges } from './abilities.js?v=mvwp0u0j';
 
 function bindAudioControls() {
     initAudio();

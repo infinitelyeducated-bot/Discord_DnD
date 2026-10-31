@@ -1,4 +1,4 @@
-import { SIGNALING_SERVER_URL } from './config.js?v=mvwjhe1p';
+import { SIGNALING_SERVER_URL } from './config.js?v=mvwp0u0j';
 
 export class NetworkManager extends EventTarget {
     constructor(iceServers = null) {
