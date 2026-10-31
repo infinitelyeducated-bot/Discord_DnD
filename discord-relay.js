@@ -3,17 +3,38 @@
 
 import { Client, GatewayIntentBits } from 'discord.js';
 import { WebSocketServer } from 'ws';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+const __dirname2 = path.dirname(fileURLToPath(import.meta.url));
 
 const CONFIG = readDiscordConfig();
 let discordClient = null;
 const relayPages = new Set();   // live /relay sockets that want discordChat
 
 function readDiscordConfig() {
+    const p = path.join(__dirname2, 'discord-config.json');
     try {
-        return JSON.parse(fs.readFileSync(path.join(__dirname, 'discord-config.json'), 'utf8'));
-    } catch { return null; }
+        const raw = fs.readFileSync(p, 'utf8');
+        const cfg = JSON.parse(raw);
+        console.log('readDiscordConfig: ok, token len ' + (cfg.token ? cfg.token.length : 0) + ', channelName=' + cfg.channelName);
+        return cfg;
+    } catch (e) {
+        console.log('readDiscordConfig: failed — ' + e.message);
+        return null;
+    }
 }
 
+
+function listVisibleChannels(client) {
+    try {
+        console.log('guilds: ' + (client.guilds.cache.size || 0));
+        const chans = [...client.channels.cache.values()]
+            .filter(c => c.isTextBased && c.isTextBased())
+            .map(c => '#' + c.name + ' (' + c.id + ') type=' + c.type);
+        console.log('visible text channels: ' + (chans.length ? chans.join(', ') : 'none'));
+    } catch (e) { console.log('listVisibleChannels err: ' + e.message); }
+}
 
 function resolveChannelByName(client) {
     const name = CONFIG.channelName;
@@ -28,13 +49,14 @@ function resolveChannelByName(client) {
 }
 
 async function startDiscordRelay() {
-    if (!CONFIG || !CONFIG.token || !CONFIG.channelId) {
+    if (!CONFIG || !CONFIG.token || (!CONFIG.channelId && !CONFIG.channelName)) {
         console.log('Discord relay: off (discord-config.json missing or empty)');
         return null;
     }
-    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages] });
     client.on('ready', () => {
         console.log('Discord relay: online as ' + client.user.tag);
+        listVisibleChannels(client);
         resolveChannelByName(client);
     });
     client.on('messageCreate', msg => {
